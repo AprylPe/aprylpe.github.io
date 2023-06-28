@@ -1,0 +1,827 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<!-- ajouter ici les balises META opengrpaph etc. -->
+
+	<title>Sudoku Solver</title>
+	<meta name="description" content="Un outil pour résoudre vos sudoku">
+	<link rel="stylesheet" href="../assets/css/style.css">
+
+
+	<style>
+		body {
+			min-width: 700px;
+		}
+		.flex {
+			display: flex;
+			align-items: stretch;
+		}
+		div.flex>* {
+			margin: 4px;
+			flex-grow: 1;
+		}
+		button {
+			border: solid 1px #777;
+			background-color: #eee;
+			border-radius: 4px;
+			font-size: 16px;
+			min-height: 48px;
+			flex: 1;
+		}
+		button:hover {
+			border-color: #555;
+			background-color: #ddd;
+		}
+		/* Grille du sudoku */
+		#grille {
+			border-collapse: collapse;
+			aspect-ratio: 1/1;
+			margin-bottom: 16px;
+			margin: auto;
+		}
+		#grille > tbody > tr > td {
+			border: solid 1px #222;
+			padding: 0;
+			width: 48px;
+		}
+		/* Bordures épaisses */
+		#grille.s9x9 > tbody > tr:nth-of-type(3n +1) > td, #grille.s4x4 > tbody > tr:nth-of-type(2n +1) > td, #grille.s6x6v > tbody > tr:nth-of-type(3n +1) > td, #grille.s6x6h > tbody > tr:nth-of-type(2n +1) > td, #grille.s12x12v > tbody > tr:nth-of-type(4n +1) > td, #grille.s12x12h > tbody > tr:nth-of-type(3n +1) > td {
+			border-top-width: 3px;
+		}
+		#grille.s9x9 > tbody > tr:nth-of-type(3n) > td, #grille.s4x4 > tbody > tr:nth-of-type(2n) > td, #grille.s6x6v > tbody > tr:nth-of-type(3n) > td, #grille.s6x6h > tbody > tr:nth-of-type(2n) > td, #grille.s12x12v > tbody > tr:nth-of-type(4n) > td, #grille.s12x12h > tbody > tr:nth-of-type(3n) > td {
+			border-bottom-width: 3px;
+		}
+		#grille.s9x9 > tbody > tr > td:nth-of-type(3n +1), #grille.s4x4 > tbody > tr > td:nth-of-type(2n +1), #grille.s6x6v > tbody > tr > td:nth-of-type(2n +1), #grille.s6x6h > tbody > tr > td:nth-of-type(3n +1), #grille.s12x12v > tbody > tr > td:nth-of-type(3n +1), #grille.s12x12h > tbody > tr > td:nth-of-type(4n +1) {
+			border-left-width: 3px;
+		}
+		#grille.s9x9 > tbody > tr > td:nth-of-type(3n), #grille.s4x4 > tbody > tr > td:nth-of-type(2n), #grille.s6x6v > tbody > tr > td:nth-of-type(2n), #grille.s6x6h > tbody > tr > td:nth-of-type(3n), #grille.s12x12v > tbody > tr > td:nth-of-type(3n), #grille.s12x12h > tbody > tr > td:nth-of-type(4n) {
+			border-right-width: 3px;
+		}
+		/* couleur des cases */
+		#grille td.error, .legend-box.error {
+			background-color: #f008;
+		}
+		#grille td.complete table, .legend-box.complete {
+			color: #14f;
+		}
+		#grille td.trying table, .legend-box.trying {
+			color: #a80;
+		}
+		#grille td.lock, .legend-box.lock {
+			font-weight: bold;
+		}
+		#grille td.select, .legend-box.select {
+			background-color: #8888;
+		}
+
+		#grille table, .legend-box table {
+			border-collapse: collapse;
+			font-weight: inherit;
+			width: 100%;
+			aspect-ratio: 1/1;
+		}
+		#grille td td , .legend-box td{
+			visibility: hidden;
+			font-size: 8px;
+			width: 8px;
+			text-align: center;
+			line-height: 1em;
+		}
+		#grille td.c1 td.v1, #grille td.c2 td.v2, #grille td.c3 td.v3, #grille td.c4 td.v4, #grille td.c5 td.v5, #grille td.c6 td.v6, #grille td.c7 td.v7, #grille td.c8 td.v8, #grille td.c9 td.v9, #grille td.c10 td.v10, #grille td.c11 td.v11, #grille td.c12 td.v12, .legend-box td {
+			visibility: visible;
+		}
+		#grille .lock tr, #grille .lock tr td, #grille .complete tr, #grille .complete tr td, #grille .trying tr, #grille .trying tr td {
+			display: block;
+			position: relative;
+			font-size: 140%;
+			width: 100%;
+			height: 0;
+			padding: 0;
+			margin: 8px 0 -8px 0;
+		}
+		#help table {
+			border-spacing: 8px;
+		}
+		td.legend-box.lock, td.legend-box.complete, td.legend-box.trying {
+			display: flex;
+			font-size: 200%;
+			width: 48px;
+			height: 48px;
+			margin: 0px 0 0px 0;
+			justify-content: center;
+			align-items: center;
+		}
+		/* sélection du mode d'édition */
+		#choix-mode {
+			display: flex;
+			justify-content: space-between;
+			margin: 16px 0;
+		}
+		#choix-mode button{
+			color: #444;
+			flex: 1;
+			margin: 4px;
+		}
+		#choix-mode.master .master, #choix-mode.suggest .suggest, #choix-mode.attempt .attempt {
+			color: #000;
+			font-weight: bold;
+			font-size: 120%;
+		}
+		label {
+			display: block;
+			padding: 4px;
+		}
+		label input {
+			float: left;
+		}
+		#clavier {
+			width: 100%;
+		}
+		#clavier div {
+			display: flex;
+		}
+		#clavier button {
+			flex: 1;
+			margin: 4px;
+			height: 32px;
+		}
+		.legend-box {
+			border: 1px solid #222;
+			margin: 3px;
+			width: 48px;
+			height: 48px;
+		}
+		@media (prefers-color-scheme: dark) {
+			button {
+				color: #fff;
+				border-color: #555;
+				background-color: #232434;
+			}
+			button:hover{
+				color: #fff;
+				background-color: #27283a;
+			}
+			#grille > tbody > tr > td {
+				border-color: #fff;
+			}
+			#grille td.complete table, .legend-box.complete {
+				color: #04f;
+			}
+			#grille td.trying table, .legend-box.trying {
+				color: #fc0;
+			}
+			#choix-mode button{
+				color: #bbb;
+			}
+			button:hover{
+				border-color: #888;
+			}
+			#choix-mode.master .master, #choix-mode.suggest .suggest, #choix-mode.attempt .attempt {
+				color: #fff;
+				border-color: #888;
+			}
+			label input {
+				filter: invert(1);
+			}
+			.legend-box {
+				border-color: #fff;
+			}
+		}
+	</style>
+	<script>
+		var Solver
+		function load(pSudoku) {
+			// S'assure que la variable globale Solver est non définie
+			if (typeof Solver !== 'undefined') {
+				console.error("Un objet Solver existe déjà !");
+				return;
+			}
+
+			// Crée un objet SudokuSolver
+			Solver = new SudokuSolver(pSudoku);
+		}
+
+		class SudokuSolver {
+			static table = {
+				4: {
+					cellule: "<table><tbody><tr><td class=\"v1\">1</td><td class=\"v2\">2</td></tr><tr><td class=\"v3\">3</td><td class=\"v4\">4</td></tr></tbody></table>",
+					clavier: "<div><button onclick=\"action('1')\">1</button><button onclick=\"action('2')\">2</button><button onclick=\"action('3')\">3</button><button onclick=\"action('4')\">4</button><button onclick=\"action('0')\">Vide</button></div>",
+				},
+				6: {
+					cellule: "<table><tbody><tr><td class=\"v1\">1</td><td class=\"v2\">2</td></tr><tr><td class=\"v3\">3</td><td class=\"v4\">4</td></tr><tr><td class=\"v5\">5</td><td class=\"v6\">6</td></tr></tbody></table>",
+					clavier: "<div><button onclick=\"action('1')\">1</button><button onclick=\"action('2')\">2</button><button onclick=\"action('3')\">3</button><button onclick=\"action('4')\">4</button></div><div><button onclick=\"action('5')\">5</button><button onclick=\"action('6')\">6</button><button onclick=\"action('0')\" style=\"flex: 2\">Vide</button></div>",
+				},
+				9: {
+					cellule: "<table><tbody><tr><td class=\"v1\">1</td><td class=\"v2\">2</td><td class=\"v3\">3</td></tr><tr><td class=\"v4\">4</td><td class=\"v5\">5</td><td class=\"v6\">6</td></tr><tr><td class=\"v7\">7</td><td class=\"v8\">8</td><td class=\"v9\">9</td></tr></tbody></table>",
+					clavier: "<div><button onclick=\"action('1')\">1</button><button onclick=\"action('2')\">2</button><button onclick=\"action('3')\">3</button><button onclick=\"action('4')\">4</button><button onclick=\"action('5')\">5</button></div><div><button onclick=\"action('6')\">6</button><button onclick=\"action('7')\">7</button><button onclick=\"action('8')\">8</button><button onclick=\"action('9')\">9</button><button onclick=\"action('0')\">Vide</button></div>",
+				},
+				12: {
+					cellule: "<table><tbody><tr><td class=\"v1\">1</td><td class=\"v2\">2</td><td class=\"v3\">3</td></tr><tr><td class=\"v4\">4</td><td class=\"v5\">5</td><td class=\"v6\">6</td></tr><tr><td class=\"v7\">7</td><td class=\"v8\">8</td><td class=\"v9\">9</td></tr><tr><td class=\"v10\">10</td><td class=\"v11\">11</td><td class=\"v12\">12</td></tr></tbody></table>",
+					clavier: "<div><button onclick=\"action('1')\">1</button><button onclick=\"action('2')\">2</button><button onclick=\"action('3')\">3</button><button onclick=\"action('4')\">4</button><button onclick=\"action('5')\">5</button></div><div><button onclick=\"action('6')\">6</button><button onclick=\"action('7')\">7</button><button onclick=\"action('8')\">8</button><button onclick=\"action('9')\">9</button><button onclick=\"action('10')\">10</button></div><div><button onclick=\"action('11')\">11</button><button onclick=\"action('12')\">12</button><button onclick=\"action('0')\" style=\"flex: 3\">Vide</button></div>",
+				}
+			}
+			static sudokus = { /* les différentes grilles de sudoku prises en charge */
+				"4x4": {
+					taille: 4, col: 2, raw: 2, name: "Grille 4x4"
+				},
+				"6x6v": {
+					taille: 6, col: 3, raw: 2, name: "Grille 6x6 (V)"
+				},
+				"6x6h": {
+					taille: 6, col: 2, raw: 3, name: "Grille 6x6 (H)"
+				},
+				"9x9": {
+					taille: 9, col: 3, raw: 3, name: "Grille 9x9"
+				},
+				"12x12v": {
+					taille: 12, col: 4, raw: 3, name: "Grille 12x12 (V)"
+				},
+				"12x12h": {
+					taille: 12, col: 3, raw: 4, name: "Grille 12x12 (H)"
+				}
+			}
+
+			constructor(pSudoku) {
+				if (!SudokuSolver.sudokus[pSudoku]) {
+					console.error("La grille demandée n'existe pas.");
+					return;
+				}
+				this.large = SudokuSolver.sudokus[pSudoku].taille;
+				this.grille = new Array(this.large ** 2).fill(null).map((_, index) => {
+					const raw = Math.floor(index / this.large);
+					const col = index % this.large;
+					const box = Math.floor(raw / SudokuSolver.sudokus[pSudoku].col) * SudokuSolver.sudokus[pSudoku].col + Math.floor(col / SudokuSolver.sudokus[pSudoku].raw);
+					const p = Array.from({ length: this.large }, (_, i) => i + 1);
+					return {
+						raw, col, box, p, locked: false, attempt: false, classes: ""
+					};
+				});
+				this.select = null;
+				this.modeActu = "master";
+				this.incertain = false;
+				this.showPossibilities = true;
+				document.getElementById("menu").style.display = "none";
+
+				// Génère la table HTML
+				let grilleElem = document.getElementById("grille");
+				grilleElem.innerHTML = SudokuSolver.generateTableHTML(this.large);
+				grilleElem.className = "s" + pSudoku; // Pour les bordures épaisses qui délimitent les cases
+
+				// Affiche le solveur
+				document.getElementById("solver").style.display = "block";
+				document.getElementById("clavier").innerHTML = SudokuSolver.table[this.large].clavier
+				document.getElementById("name").innerText = SudokuSolver.sudokus[pSudoku].name
+
+				this.updateUI();
+			}
+
+			visibility(val) {
+				this.showPossibilities = val;
+				this.updateUI()
+			}
+
+			static generateTableHTML(taille) {
+				// Vérification de la taille
+				if (!SudokuSolver.table[taille]) return "";
+
+				// Génération de la grille
+				let h = "<tbody>"
+				let id = 0
+				for(let i = 0; i < taille; i++) {
+					h += "<tr>"
+					for(let j = 0; j < taille; j ++) {
+						h += '<td onclick="select(' + id + ')" id="case' + id + '">' + SudokuSolver.table[taille].cellule + '</td>'
+						id++
+					}
+					h += "</tr>"
+				}
+				h += "</tbody>"
+				return h
+			}
+
+			selection(cel) {
+				if (cel < 0 || cel >= this.grille.length) return;
+				if (this.select !== null) {
+					document.getElementById("case" + this.select).classList.remove("select");
+				}
+				this.select = cel;
+				document.getElementById("case" + this.select).classList.add("select");
+			}
+
+			action(touche) {
+				document.getElementById("msg").innerText = ""
+				if(touche > 0) {
+					switch(this.modeActu) {
+						case "master":
+							this.setAndLock(touche)
+							break
+						case "suggest":
+							this.toggleSuggest(touche)
+							break
+						case "attempt":
+							this.setAndTry(touche)
+							break
+					}
+				} else {
+					this.resetCase()
+				}
+			}
+
+			setAndLock(value) {
+				if (this.select != null && this.grille[this.select] && this.grille[this.select].p.includes(value)) {
+					this.grille[this.select].p = [value];
+					this.grille[this.select].locked = true;
+					this.grille[this.select].attempt = false;
+					this.search();
+				}
+			}
+
+			setAndTry(value) {
+				if (this.select != null && this.grille[this.select] && !this.grille[this.select].locked && this.grille[this.select].p.includes(value)) {
+					this.grille[this.select].p = [value];
+					this.grille[this.select].attempt = true;
+					this.incertain = true;
+					this.search();
+				}
+			}
+
+			toggleSuggest(value) {
+				if (this.select != null && this.grille[this.select] && !this.grille[this.select].locked) {
+					let selectedCase = this.grille[this.select];
+					if (selectedCase.p.includes(value)) {
+						this.grille[this.select].p.splice(this.grille[this.select].p.indexOf(value), 1);
+					} else if (value <= this.large) {
+						this.grille[this.select].p.push(value);
+					}
+					this.updateUI()
+				}
+			}
+
+			getCSSClass(props) {
+				let cssClass = [];
+				if (props.p.length === 0) {
+					cssClass.push("error");
+				} else {
+					if (props.p.length === 1) {
+						cssClass.push(props.locked ? "lock" : props.attempt ? "trying" : "complete");
+					}
+					if (props.p.length == 1 || this.showPossibilities) {
+						for(let c of props.p) cssClass.push("c" + c);
+					}
+				}
+				if(cssClass.length == 0) cssClass = ["vide"];
+				// Comparaison avec la classe actuelle
+				return cssClass.join(" ") === props.classes ? "" : cssClass.join(" ");
+			}
+
+			updateUI(cel = undefined) {
+				if (cel === undefined) {
+					for (let i in this.grille) this.updateUI(i);
+				} else if (cel in this.grille) {
+					const newClasses = this.getCSSClass(this.grille[cel]);
+					if (newClasses !== '') {
+						this.grille[cel].classes = newClasses;
+						document.getElementById("case" + cel).className = newClasses + (cel == this.select?" select":"");
+					}
+				}
+			}
+
+			checkSingleCandidate() {
+				if(!document.getElementById("autocomplete").checked) return 0;
+				let modif = 0;
+				let sets = [];
+
+				for (let i = 0; i < this.large; i++) {
+					sets.push(this.grille.reduce((acc, cel, idx) => cel.raw === i ? [...acc, idx] : acc, []));
+					sets.push(this.grille.reduce((acc, cel, idx) => cel.col === i ? [...acc, idx] : acc, []));
+					sets.push(this.grille.reduce((acc, cel, idx) => cel.box === i ? [...acc, idx] : acc, []));
+				}
+				for (const set of sets) {
+					for (let i = 1; i <= this.large; i++) {
+						const acceptingCells = set.filter(cell => this.grille[cell].p.includes(i));
+						if (acceptingCells.length === 1) {
+							const cellToSet = acceptingCells[0];
+							if (this.grille[cellToSet].p.length > 1) {
+								this.grille[cellToSet].p = [i]
+								modif++;
+								if (this.recalc() < 0) {
+									return -101;
+								}
+							}
+						}
+					}
+				}
+				return modif
+			}
+
+			recalc(force = false) {
+				let modif = 0;
+				let autocomplete = document.getElementById("autocomplete").checked
+				for (let i in this.grille) {
+					// On teste toutes les cellules de la grille
+
+					if (this.grille[i].p.length === 0) {console.log("cellule n°" + i + " est vide"); return -100;} // Erreur si la cellule n'accepte aucune valeur
+
+					if ((autocomplete || force) && this.grille[i].p.length === 1) { // Si la cellule n'accepte qu'une seule valeur
+						let contraintes = this.grille.reduce((acc, c, j) => { // Recherche des cellules partageant la même ligne/colonne/case et acceptant la valeur de la cellule testée
+							if ((i != j) && (c.raw === this.grille[i].raw || c.col === this.grille[i].col || c.box === this.grille[i].box) && c.p.includes(this.grille[i].p[0])) { acc.push(j)}
+							return acc;
+						}, []);
+						for (let j of contraintes) {
+							if (this.grille[j].p.length === 1) { // Conflit : Les deux cellules n'acceptent qu'une seule et même valeur
+								if (!this.grille[i].locked ) this.grille[i].p = []; // On vide les cellules en conflit qui ne sont pas verrouillées
+								if (!this.grille[j].locked ) this.grille[j].p = [];
+								//console.log("Conflit avec les cellules " + i + " et " + j)
+								return -100;
+							} else { // this.grille[j].p.length > 1
+								this.grille[j].p = this.grille[j].p.filter((val) => val !== this.grille[i].p[0]); // On retire la valeur des valeurs possibles de l'autre cellule
+								modif ++;
+								if (this.grille[j].p.length === 1 && this.incertain) this.grille[j].attempt = true;
+							}
+						}
+					}
+				}
+				return modif;
+			}
+
+			isComplete() {
+				for (const cel of this.grille) {
+					if (cel.p.length !== 1) return false;
+				}
+				return true
+			}
+
+			search(force = false) {
+				// recherche rapide
+				let nbModifs;
+				do {
+					nbModifs = this.recalc(force);
+					if (nbModifs < 0) {
+						this.updateUI();
+						return -100;
+					}
+				} while (nbModifs > 0);
+				if(this.checkSingleCandidate() > 0) return this.search(force);
+				this.updateUI();
+				return 0;
+			}
+
+			resetUnlock() {
+				this.grille.forEach((cellule, i) => {
+					if (!cellule.locked) {
+						this.grille[i].p = Array.from({length: this.large}, (_, i) => i + 1);
+						this.grille[i].attempt = false;
+						this.updateUI(i)
+					}
+				});
+				this.incertain = false
+			}
+
+			resetTrys(impossibles = []) {
+				this.resetUnlock()
+				for (let [celluleIndex, valeurImpossible] of impossibles) {
+					this.grille[celluleIndex].p = this.grille[celluleIndex].p.filter(val => val !== valeurImpossible);
+				}
+			}
+
+			advSearch() {
+				// 1. Modification des paramètres
+				document.getElementById("autocomplete").checked = true;
+
+				// 2. Reset Unlock
+				this.resetUnlock();
+
+				// 3. Recherche rapide
+				const result = this.search();
+				if (result < 0) {
+					document.getElementById("msg").innerHTML = "Impossible de résoudre cette grille.";
+					this.updateUI()
+					return;
+				}
+
+				// 4. Initialisation des variables
+				let incomplets = this.grille.reduce((acc, cellule, index) => {if (cellule.p.length > 1) {acc.push(index)} return acc}, []);
+				let impossibles = [];
+				let testedCells = [];
+				let selectedCell = undefined;
+
+				// 5. Boucle principale
+				while (incomplets.length > 0) {
+					// 5.1. Trouver la cellule à tester
+					selectedCell = incomplets.find(index => !testedCells.includes(index));
+
+					if (selectedCell === undefined) {
+						document.getElementById("msg").innerHTML = "Trop de cases sont encore vides, veuillez compléter la grille.";
+						this.updateUI()
+						return;
+					}
+
+					// 5.2. Tester les valeurs de la cellule
+					let solutions = 0;
+					let attempts = 0;
+					// 5.2.1. Tester chaque valeur
+					for (const value of this.grille[selectedCell].p) {
+						if (!this.grille[selectedCell].p.includes(value)) continue;
+						this.incertain = true;
+
+						this.grille[selectedCell].p = [value];
+						this.grille[selectedCell].attempt = true;
+
+						if (this.search() === 0) {
+							if (this.isComplete()) solutions++;
+						} else {
+							impossibles.push([selectedCell, value]);
+						}
+
+						this.resetTrys(impossibles);
+						this.search();
+					}
+					// 5.2.1. Analyse des résultats
+					if (this.grille[selectedCell].p.length === 0) {
+						// Aucune des valeurs n'était possible
+						document.getElementById("msg").innerHTML = "Aucune solution possible.";
+						console.log("Cellule " + selectedCell + " est vide")
+						this.updateUI();
+						return;
+					} else if (this.grille[selectedCell].p.length === 1) {
+						// Une seule valeurs fonctionne
+						this.grille[selectedCell].attempt = false;
+						if (solutions === 1) {
+							// Connaitre cette case suffit à résoudre le sudoku
+							document.getElementById("msg").innerHTML = "Une unique solution a été trouvée.";
+							this.updateUI();
+							return;
+						}
+					} else if (this.grille[selectedCell].p.length === solutions && solutions > 1) {
+						document.getElementById("msg").innerHTML = solutions + " solutions ont été trouvées.";
+						this.updateUI();
+						return;
+					}
+
+					// 5.3. Marquer la cellule comme testée
+					testedCells.push(selectedCell);
+
+					// 5.4. Mettre à jour la liste des cellules incomplètes
+					incomplets = this.grille.reduce((acc, cellule, index) => {if (cellule.p.length > 1) {acc.push(index)} return acc}, []);
+				}
+			}
+
+			changeMode(mode) {
+				document.getElementById("choix-mode").className = mode
+				this.modeActu = mode
+			}
+
+			resetCase() {
+				if (this.select === undefined) return;
+
+				this.grille[this.select].locked = false;
+				this.grille[this.select].attempt = false;
+				this.grille[this.select].p = Array.from(Array(this.large), (_, i) => i + 1);
+
+				this.updateUI(this.select);
+			}
+
+			removeRandomNumber() {
+				// Récupérer la liste des indices des cellules verrouillées
+				const lockedIndices = this.grille.reduce((indices, cell, i) => {
+					if (cell.locked) indices.push(i);
+					return indices;
+				}, []);
+				if(lockedIndices.length == 0) return;
+				// Choisir un index au hasard parmi les cellules verrouillées
+				const randomIndex = lockedIndices[Math.floor(Math.random() * lockedIndices.length)];
+
+				// Déverrouiller la cellule et la réinitialiser
+				this.grille[randomIndex].locked = false;
+				this.grille[randomIndex].attempt = false;
+				this.grille[randomIndex].p = Array.from({ length: this.large }, (_, i) => i + 1);
+			}
+
+			generate() {
+				// 1. Réinitialisation de la grille
+				const tempCell = { locked: false, attempt: false, classes: "", p: Array.from({ length: this.large }, (_, i) => i + 1) };
+				for (let i in this.grille) {
+					Object.assign(this.grille[i], tempCell);
+				}
+
+				// 2. Activation de la complétion automatique
+				document.querySelector("#autocomplete").checked = true;
+
+				// 3. Initialisation des variables
+				let incomplets = this.grille.reduce((acc, cellule, index) => {if (cellule.p.length > 1) {acc.push(index)} return acc}, []);
+				let impossibles = [];
+				let selectedCell = undefined;
+
+				// 4. Boucle principale
+				let loop = () => {
+//~ 				while (incomplets.length > 0) {
+					if (incomplets.length > 0) {
+						// 4.1. Sélection d'une cellule incomplète au hasard
+						selectedCell = incomplets[Math.floor(Math.random() * incomplets.length)];
+						const cell = this.grille[selectedCell];
+
+						// 4.2. Sélection de l'une des valeur parmi la liste p de la cellule
+						const valeur = cell.p[Math.floor(Math.random() * cell.p.length)];
+
+						// 4.3. Passage de la cellule en mode essai et affectation de la valeur choisie à la cellule
+						this.grille[selectedCell].attempt = true;
+						this.grille[selectedCell].p = [valeur];
+
+						// 4.4. Appel de la méthode de recherche rapide
+						if (this.search() < 0) {
+							// 4.5. Si la méthode a retourné une valeur négative, alors la valeur choisie n'était pas possible.
+							// On ajoute le couple [case, valeur] à la liste des impossibles
+							impossibles.push([selectedCell, valeur]);
+							this.resetTrys(impossibles);
+							if(this.search() < 0) {
+								// La grille n'a pas de solution
+								this.removeRandomNumber()
+								incomplets = this.grille.reduce((acc, cellule, index) => {if (cellule.p.length > 1) {acc.push(index)} return acc}, []);
+								impossibles = [];
+								this.resetTrys();
+							}
+						} else {
+							// 4.6. Sinon la valeur est conservée, la cellule n'est plus en mode essai et est verrouillée
+							// Remarque: nous ne sommes pas certains qu'il y ait au moins une solution.
+							this.grille[selectedCell].attempt = false;
+							this.grille[selectedCell].locked = true;
+							this.resetTrys(impossibles);
+						}
+
+						// 4.7. Si la grille n'est pas complète, alors on appelle la méthode resetTrys
+						if (incomplets.length > 0) {
+							this.resetTrys(impossibles);
+							this.search()
+						}
+
+						// 4.8. On met à jour la liste des cellules incomplètes
+						incomplets = this.grille.reduce((acc, cellule, index) => { if (cellule.p.length > 1) {acc.push(index)} return acc}, []);
+
+						requestAnimationFrame(loop)
+					} else {
+
+						if(this.search() < 0) {
+							// La grille générée est impossible
+							for (let i in this.grille) {
+								Object.assign(this.grille[i], tempCell);
+							}
+							document.getElementById("msg").innerHTML = "Echec de la génération de la grille.";
+							this.updateUI()
+							return
+						}
+
+						// 5. Désactivation de la complétion automatique
+						document.querySelector("#autocomplete").checked = false;
+
+						// 6. Réinitialisation des cellules déverrouillées
+						this.resetUnlock();
+						this.updateUI()
+					}
+				}
+				requestAnimationFrame(loop)
+			}
+		}
+
+		function select(e) {
+			Solver.selection(e)
+		}
+		function action(touche) {
+			Solver.action(touche*1)
+		}
+		function unload() {
+			document.getElementById("menu").style.display = "block";
+			document.getElementById("solver").style.display = "none";
+			document.getElementById("help").style.display = "none";
+			Solver = undefined;
+		}
+		function showHelp() {
+			document.getElementById('help').style.display='block';
+			document.getElementById('help').scrollIntoView({behavior: 'smooth'}, true);
+		}
+	</script>
+</head>
+<body>
+	<header>
+		<!-- Logo et titre -->
+		<div class="logo">
+			<a href="index.html">
+				<img src="assets/svg/logo_color.svg" alt="Logo AprylP">
+			</a>
+		</div>
+		<h1 class="site-title">Titre du site</h1>
+	</header>
+
+	<main>
+		<!-- Contenu principal de la page -->
+		<nav>
+			<!-- Zone de navigation -->
+			<ul class="navigation">
+				<li><a href="index.html">Accueil</a></li>
+			</ul>
+		</nav>
+
+		<section id="menu">
+			<div class="flex">
+				<button onclick="load('4x4')">Grille 4x4</button>
+			</div>
+			<div class="flex">
+				<button onclick="load('6x6v')">Grille 6x6 (V)</button>
+				<button onclick="load('6x6h')">Grille 6x6 (H)</button>
+			</div>
+			<div class="flex">
+				<button onclick="load('9x9')">Grille 9x9</button>
+			</div>
+			<div class="flex">
+				<button onclick="load('12x12v')">Grille 12x12 (V)</button>
+				<button onclick="load('12x12h')">Grille 12x12 (H)</button>
+			</div>
+		</section>
+		<section id="help" style="display: none">
+			<h2>Comment utiliser ce projet</h2>
+
+			<p>Pour commencer, sélectionnez une case en cliquant dessus. Vous pouvez ensuite modifier sa valeur en entrant un chiffre entre 1 et 9. Si la case est verrouillée, sa valeur ne peut pas être modifiée.</p>
+
+			<p>Vous pouvez également utiliser l'autocomplétion en cochant la case "Compléter automatiquement les cases". Si cette option est activée, le projet mettra à jour les possibilités et recherchera les solutions évidentes.</p>
+
+			<p>Si vous avez besoin d'aide, vous pouvez afficher les possibilités en cochant la case "Afficher les possibilités".</p>
+
+			<p>Le projet propose trois modes d'édition :<br>
+			- Le mode "initial" (bouton "Initial" en haut à gauche) permet de rentrer les valeurs de départ de la grille, qui ne peuvent pas être modifiées.<br>
+			- Le mode "tentative" (bouton "Tentative" en haut au milieu) permet de tester différentes combinaisons de chiffres pour résoudre la grille.<br>
+			- Le mode "possibilités" (bouton "Possibilités" en haut à droite) permet d'ajouter ou retirer des valeurs possibles à la case sélectionnée.</p>
+
+			<p>Enfin, vous pouvez nettoyer la grille en cliquant sur le bouton "Nettoyer", et effectuer des recherches rapides ou avancées en cliquant sur les boutons correspondants. La recherche rapide permet de garder uniquement les bonnes possibilités et de compléter les lignes/colonnes/boîtes. Cette méthode de recherche est suffisante pour les grilles les plus faciles, mais ne permet généralement pas de remplir les grilles les plus difficiles. La recherche avancée utilise une méthode de recherche plus complexe qui peut remplir toutes les grilles, mais peut prendre plus de temps.</p>
+
+			<h2>Légende</h2>
+
+			<table>
+				<tr>
+					<td class="legend-box">
+						<table><tbody>
+							<tr><td></td><td>2</td><td>3</td></tr>
+							<tr><td>4</td><td></td><td>6</td></tr>
+							<tr><td>7</td><td>8</td><td></td></tr>
+						</tbody></table>
+					</td>
+					<td>Cellule vide, acceptant les valeurs 2, 3, 4, 6, 7 et 8.</td>
+				</tr>
+				<tr>
+					<td class="legend-box"></td>
+					<td>Cellule vide. Les valeurs acceptées sont masquées.</td>
+				</tr>
+				<tr>
+					<td class="legend-box lock">1</td>
+					<td>Valeur de départ</td>
+				</tr>
+				<tr>
+					<td class="legend-box complete">5</td>
+					<td>Cellule avec une seule valeur, dont la solution est certaine</td>
+				</tr>
+				<tr>
+					<td class="legend-box trying">9</td>
+					<td>Cellule avec une seule valeur, dont la solution n'est pas certaine</td>
+				</tr>
+				<tr>
+					<td class="legend-box error"></td>
+					<td>Cellule vide, mais avec des possibilités incorrectes</td>
+				</tr>
+			</table>
+			<button onclick="document.getElementById('help').style.display='none'">Masquer l'aide</button>
+		</section>
+		<section id="solver" style="display: none">
+			<h1 id="name"></h1>
+			<button onclick="showHelp()">Aide</button>
+			<table id="grille"></table>
+			<label><input id="autocomplete" type="checkbox" checked>Completer automatiquement les cases</label>
+			<label onclick="Solver.visibility(this.firstElementChild.checked)"><input type="checkbox" id="show-possibilities" checked>Afficher les possibilités</label>
+			<div id="choix-mode" class="master">
+				<button class="master" onclick="Solver.changeMode('master')">Initial</button>
+				<button class="suggest" onclick="Solver.changeMode('suggest')">Possibilités</button>
+				<button class="attempt" onclick="Solver.changeMode('attempt')">Tentative</button>
+			</div>
+			<div id="clavier"></div>
+			<div class="flex">
+				<button onclick="Solver.resetUnlock()">Nettoyer</button>
+				<button onclick="Solver.search(true)">Recherche rapide</button>
+				<button onclick="Solver.advSearch()">Recherche avancée</button>
+			</div>
+			<p id="msg"></p>
+			<div class="flex">
+				<button onclick="unload()">Quitter</button>
+				<button onclick="Solver.generate()">Nouvelle grille</button>
+			</div>
+		</section>
+	</main>
+	<footer>
+		<div class="footer-column">
+			<!-- Mentions légales -->
+		</div>
+		<div class="footer-column">
+			<!-- Signature et réseaux sociaux -->
+			<p>Créé par AprylP</p>
+		</div>
+	</footer>
+</body></html>

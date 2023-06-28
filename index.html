@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<!-- ajouter ici les balises META opengrpaph etc. -->
+
+	<title>Nom de la page</title>
+	<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+	<header>
+		<!-- Logo et titre -->
+		<div class="logo">
+			<a href="index.html">
+				<img src="assets/svg/logo_color.svg" alt="Logo AprylP">
+			</a>
+		</div>
+		<h1 class="site-title">Titre du site</h1>
+	</header>
+
+	<main>
+		<!-- Contenu principal de la page -->
+		<nav>
+			<!-- Zone de navigation -->
+			<ul class="navigation">
+				<li><a href="index.html">Accueil</a></li>
+			</ul>
+		</nav>
+
+		<section>
+			<!-- Contenu de la première section -->
+			<h1>Bienvenue sur mon site !</h1>
+			<p>Je partage ici certains des mes projets.</p>
+		</section>
+
+		<section class="project-group">
+			<div>
+				<h2>Générateur de mots de passe</h2>
+				<p>Ce projet permet de générer aléatoirement des mots de passe forts.</p>
+				<p>Pour des raisons évidentes, le code s'exécute uniquement coté client.</p>
+			</div>
+			<div class="project-list">
+				<a href="/outils/mdp.html" class="project-item">
+					<svg width="96" height="96">
+						<rect x="0" y="0" width="96" height="96" rx="10" fill="#fdfdfd"></rect>
+						<circle cx="24" cy="48" r="8" fill="#000"></circle>
+						<circle cx="48" cy="48" r="8" fill="#000"></circle>
+						<circle cx="72" cy="48" r="8" fill="#000"></circle>
+					</svg>
+					<span>Générateur de MdP</span>
+				</a>
+			</div>
+		</section>
+
+		<section class="project-group">
+			<div>
+				<h2>Solver et générateur de Sudoku</h2>
+				<p>Quand j'ai commencé ce projet, mon objectif était de créer un générateur de grille de sudoku. Je me suis rendu compte que pour valider une grille il fallait forcément être capable de la résoudre. J'ai donc réfléchi à une méthode pour résoudre des sudoku, que j'ai dans un premier temps testé à la main avant d'implémenter en JavaScript.</p>
+				<p>Ce projet n'est certainement pas le plus optimisé pour résoudre des Sudoku, mais il résout les grilles de sudoku progressivement, et éliminant une par une les valeurs impossibles.</p>
+			</div>
+			<div class="project-list">
+				<a href="/sudoku/sudoku_v4.html" class="project-item">
+					<svg width="96" height="96">
+						<rect x="0" y="0" width="96" height="96" rx="10" fill="#f2f2f2"></rect>
+						<line x1="32" y1="4" x2="32" y2="88" stroke="#555" stroke-width="2"></line>
+						<line x1="64" y1="4" x2="64" y2="88" stroke="#555" stroke-width="2"></line>
+						<line x1="4" y1="32" x2="88" y2="32" stroke="#555" stroke-width="2"></line>
+						<line x1="4" y1="64" x2="88" y2="64" stroke="#555" stroke-width="2"></line>
+						<text x="8" y="20" fill="#000" font-size="20">1</text>
+						<text x="40" y="20" fill="#228" font-size="20">2</text>
+						<text x="72" y="20" fill="#000" font-size="20">3</text>
+						<text x="8" y="52" fill="#228" font-size="20">4</text>
+						<text x="40" y="52" fill="#000" font-size="20">5</text>
+						<text x="72" y="52" fill="#228" font-size="20">6</text>
+						<text x="8" y="84" fill="#000" font-size="20">7</text>
+						<text x="40" y="84" fill="#228" font-size="20">8</text>
+						<text x="72" y="84" fill="#000" font-size="20">9</text>
+					</svg>
+					<span>Sudoku</span>
+				</a>
+			</div>
+		</section>
+
+		<section class="project-group">
+			<div>
+				<h2>MasterMind</h2>
+				<p>Ces projets sont des version du jeu MasterMind. Un code est choisi par l'ordinateur, et le joueur doit le retrouver en testant des combinaisons.</p>
+				<p>MasterMind v1 respècte les règles du jeu, le nombre de couleur et la longueur du code, tantdis que la v2 a une couleur supplémentaire et un code plus long.</p>
+				<p>Ce jeu est entièrement codé en HTML, JavaScript et CSS. Il nécessite d'avoir javascript activé. Il ne nécessite aucune connxion internet (sauf pour charger la page au début).</p>
+			</div>
+			<div class="project-list">
+				<a href="/mastermind/mastermind.html" class="project-item">
+					<svg width="96" height="96">
+						<rect x="0" y="0" width="96" height="96" rx="10" fill="#630"></rect>
+						<circle cx="24" cy="24" r="16" fill="#000"></circle>
+						<circle cx="24" cy="72" r="16" fill="#000"></circle>
+						<circle cx="72" cy="24" r="16" fill="#000"></circle>
+						<circle cx="72" cy="72" r="16" fill="#000"></circle>
+					</svg>
+					<span>MasterMind v1</span>
+				</a>
+				<a href="/mastermind/mastermind5.html" class="project-item">
+					<svg width="96" height="96">
+						<rect x="0" y="0" width="96" height="96" rx="10" fill="#802"></rect>
+						<circle cx="24" cy="24" r="14" fill="#000"></circle>
+						<circle cx="24" cy="72" r="14" fill="#000"></circle>
+						<circle cx="72" cy="24" r="14" fill="#000"></circle>
+						<circle cx="72" cy="72" r="14" fill="#000"></circle>
+						<circle cx="48" cy="48" r="14" fill="#000"></circle>
+					</svg>
+					<span>MasterMind v2</span>
+				</a>
+			</div>
+		</section>
+
+		<!-- Ajoute d'autres sections selon les besoins -->
+	</main>
+
+	<footer>
+		<div class="footer-column">
+			<!-- Mentions légales -->
+		</div>
+		<div class="footer-column">
+			<!-- Signature et réseaux sociaux -->
+			<p>Créé par AprylP</p>
+		</div>
+	</footer>
+</body>
+</html>

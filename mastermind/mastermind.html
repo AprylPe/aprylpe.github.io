@@ -1,0 +1,194 @@
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+		<script>
+			var couleurs = ["rouge","orange","jaune","vert","bleu","marron"]
+			var solution = [-1,-1,-1,-1]
+			var proposition = [-1,-1,-1,-1]
+			var nbProp = 0
+			var caseSelect = 0;
+
+			nouvellePartie()
+
+			function setColor(c) {
+				proposition[caseSelect] = c;
+				document.getElementById('case' + caseSelect).className = "rond " + couleurs[c]
+				if (caseSelect === 3) {
+					selectCase(0)
+				} else {
+					selectCase(caseSelect + 1)
+				}
+			}
+			function selectCase(c) {
+				caseSelect = c;
+				document.getElementById('proposition').className = "sel" + c
+			}
+			function proposer() {
+				if(!proposition.includes(-1)) {
+					nbProp ++
+					var n = 0
+					var b = 0
+					var s = []
+					var p = []
+					for (var i = 0; i < 4; i++) {
+						s[i] = solution[i]
+						p[i] = proposition[i]
+						if (s[i] === p[i]) {
+							n++
+							s[i] = -1
+							p[i] = -1
+						}
+					}
+					for (var i = 0; i < 4; i++) {
+						if (s[i] != -1 && p.includes(s[i])) {
+							b++
+							p[p.indexOf(s[i])] = -1
+						}
+					}
+					var h = '<tr><td class="nbr"><h2>' + nbProp + '</h2></td><td class="nb">'
+					for (var i = 0; i < 4; i++) {
+						if (n > i) {
+							h += '<div class="rond noir"></div>'
+						} else if (b + n > i) {
+							h += '<div class="rond blanc"></div>'
+						} else {
+							h += '<div class="rond"></div>'
+						}
+					}
+					h += '</td><td class="color">'
+					for (var i = 0; i < 4; i++) {
+						h += '<div class="rond ' + couleurs[proposition[i]] + '"></div>'
+					}
+					h += '</td></tr>'
+					document.getElementById('logs').innerHTML = h + document.getElementById('logs').innerHTML
+					document.getElementById('case0').className = "rond"
+					document.getElementById('case1').className = "rond"
+					document.getElementById('case2').className = "rond"
+					document.getElementById('case3').className = "rond"
+					proposition = [-1,-1,-1,-1]
+					selectCase(0)
+					if (n === 4) {
+						document.getElementById('btn').className = "bravo"
+					}
+				}
+			}
+
+			function nouvellePartie() {
+				solution[0] = Math.floor(Math.random() * 6)
+				solution[1] = Math.floor(Math.random() * 6)
+				solution[2] = Math.floor(Math.random() * 6)
+				solution[3] = Math.floor(Math.random() * 6)
+				document.getElementById('logs').innerHTML = ""
+				document.getElementById('btn').className = "jeu"
+				nbProp = 0
+			}
+		</script>
+		<style>
+			body {
+				background: #840;
+				max-width: 420px;
+				margin: auto;
+				text-align: center;
+			}
+			.content {
+				border: solid 2px #fff;
+				border-radius: 10px;
+				background: #420;
+				color: #fff;
+				margin: 8px;
+				padding: 10px;
+			}
+			.nb {
+				width: 100px;
+			}
+			.rond {
+				width: 36px;
+				height: 36px;
+				border-radius: 50%;
+				border: solid 2px #222;
+				display: inline-block;
+				margin: 2px;
+			}
+			table {
+				margin: auto
+			}
+			.logs {
+				height: calc(100% - 330px);
+				overflow-y: scroll;
+				overflow-x: hidden;
+				border: solid 1px #fff;
+			}
+			.rouge { background: #d00 }
+			.orange { background: #d50 }
+			.jaune { background: #cc0 }
+			.vert { background: #2a2 }
+			.bleu { background: #228 }
+			.marron { background: #740 }
+			.blanc { background: #fff }
+			.noir { background: #000 }
+			.sel0 #case0 { border: solid 2px #fff }
+			.sel1 #case1 { border: solid 2px #fff }
+			.sel2 #case2 { border: solid 2px #fff }
+			.sel3 #case3 { border: solid 2px #fff }
+			h2 { color: #fff }
+			#btn {
+				height: 180px;
+			}
+			.new .bravo, .new .jeu { display: none }
+			.jeu .bravo, .jeu .new { display: none }
+			.bravo .jeu { display: none }
+			a h3 {
+				border: solid 2px #fff;
+				border-radius: 10px;
+				background: #630;
+				padding: 8px
+			}
+			a h3:hover {
+				background: #a50;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="content">
+			<h1>Master Mind</h1>
+			<div class="logs">
+				<table>
+					<tbody id="logs">
+					</tbody>
+				</table>
+			</div>
+			<div id="btn" class="new">
+				<div class="jeu">
+					<table>
+						<tbody>
+							<tr id="proposition" class="sel0">
+								<td></td>
+								<td><a class="rond" id="case0" onclick="selectCase(0)"></a></td>
+								<td><a class="rond" id="case1" onclick="selectCase(1)"></a></td>
+								<td><a class="rond" id="case2" onclick="selectCase(2)"></a></td>
+								<td><a class="rond" id="case3" onclick="selectCase(3)"></a></td>
+								<td></td>
+							</tr>
+							<tr>
+								<td><a class="rond rouge" onclick="setColor(0)"></a></td>
+								<td><a class="rond orange" onclick="setColor(1)"></a></td>
+								<td><a class="rond jaune" onclick="setColor(2)"></a></td>
+								<td><a class="rond vert" onclick="setColor(3)"></a></td>
+								<td><a class="rond bleu" onclick="setColor(4)"></a></td>
+								<td><a class="rond marron" onclick="setColor(5)"></a></td>
+							</tr>
+						</tbody>
+					</table>
+					<a onclick="proposer()"><h3>Valider</h3></a>
+				</div>
+				<div class="bravo">
+					<h3>Bravo, vous avez gagné</h3>
+				</div>
+				<div class="new">
+					<a onclick="nouvellePartie()"><h3>Nouvelle partie</h3></a>
+				</div>
+			</div>
+		</div>
+	</body>
+</html>

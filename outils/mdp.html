@@ -1,0 +1,258 @@
+<!DOCTYPE html><html lang="fr">
+<head>
+	<meta charset="utf-8">
+	<title>Générateur de mot de passe aléatoires</title>
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" href="../assets/css/style.css">
+	<style>
+		body {
+			text-align: justify;
+		}
+		.content {
+			max-width: 700px;
+			margin: auto;
+		}
+		a, footer i {
+			text-decoration: none;
+		}
+		a:hover {color: #fb2}
+		.btn {
+			border-radius: 4px;
+			background-image: linear-gradient(254deg, #37e, #63b);
+			padding: 12px;
+			width: 250px;
+			display: inline-block;
+			text-align: center;
+			cursor: pointer;
+		}
+		a.btn, a.btn:hover {
+			color: #fff
+		}
+		.btn:hover {
+			background-image: linear-gradient(254deg, #48e, #74b);
+		}
+		.content>div {
+			border: solid 1px #ddd;
+			box-shadow: 0 0 5px rgba(0,0,0,.0975);
+			background: #fff;
+			padding:  12px;
+			margin: 16px auto;
+		}
+		div.alert, section.alert {
+			border: solid 1px #f88;
+			background: #fdd !important;
+			padding:  12px;
+			text-align: center;
+			margin: 16px auto;
+		}
+		div.warn {
+			border: solid 1px #fc4;
+			background: #ffd !important;
+			padding:  12px;
+			text-align: center;
+			margin: 16px auto;
+		}
+		div.info {
+			border: solid 1px #88f;
+			background: #ddf !important;
+			padding:  12px;
+			text-align: center;
+			margin: 16px auto;
+		}
+		input {
+			font-size: 14px;
+		}
+		label {
+			display: block;
+			margin-bottom: 8px;
+		}
+		div.flex {
+			display: flex;
+			align-items: stretch;
+		}
+		div.flex>* {
+			margin: 4px;
+			flex-grow: 1;
+		}
+		input[type="checkbox"] {
+			margin-right: 10px;
+		}
+		button {
+			margin-top: 10px;
+			margin-bottom: 10px;
+		}
+		#password-output {
+			display: block;
+			border: 1px solid black;
+			padding: 8px;
+			white-space: pre-wrap;
+			word-wrap: break-word;
+			overflow-x: auto;
+		}
+		input[type=text], input[type=password], input[type=number] {
+			color: #333;
+			background-color: #fff;
+			border: solid 1px #000;
+		}
+		section h1, section h2 {
+			margin: 8px 0;
+		}
+
+		@media (prefers-color-scheme: dark) {
+			input[type=text], input[type=password], input[type=number] {
+				color: #fff;
+				background-color: #232434;
+				border-color: #333;
+			}
+		}
+	</style>
+	<script>
+function generatePassword() {
+	var length = parseInt(document.getElementById("length").value);
+	var latin = document.getElementById("latin").checked;
+	var numbers = document.getElementById("numbers").checked;
+	var symbols = document.getElementById("symbols").checked;
+	var accents = document.getElementById("accents").checked;
+	var greek = document.getElementById("greek").checked;
+	var cyrillic = document.getElementById("cyrillic").checked;
+
+	var ngroup = latin + numbers + symbols + accents + greek + cyrillic;
+
+	var chars = "";
+	if (latin) {chars += "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"}
+	if (numbers) {chars += "0123456789"}
+	if (symbols) {chars += "!#$%&()*+,-./:;<=>?@[]^_`{|}~"}
+	if (accents) {chars += "àâçéèêëîïôûùüÿÀÂÇÉÈÊËÎÏÔÛÙÜŸœæŒÆ"}
+	if (greek) {chars += "αβγδεζηθικλμνξοπρστυφχψωΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩ"}
+	if (cyrillic) {chars += "абвгдеёжзийклмнопрстуфхцчшщъыьэюяәөҗңүһАБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯӘӨҖҢҮҺ"}
+
+	document.getElementById("invalidlength").style.display = (length < 1 || length > 128)?"block":"none"
+	document.getElementById("smalllength").style.display = (length >= 1 && length < 8)?"block":"none"
+	document.getElementById("nochar").style.display = (ngroup < 1)?"block":"none"
+
+	document.getElementById("successcopy").style.display = "none";
+
+	var password = "";
+	if (chars.length > 0 && length > 0 && length < 128) {
+		for (var i = 0; i < length; i++) {
+			password += chars.charAt(Math.floor(Math.random() * chars.length));
+		}
+	} else {
+		document.getElementById("password-output").value = "";
+		document.getElementById("success").style.display = "none";
+		return;
+	}
+	document.getElementById("password-output").value = password;
+	document.getElementById("success").style.display = "block";
+}
+
+function copyToClipboard() {
+	var output = document.getElementById("password-output");
+	output.select();
+	output.setSelectionRange(0, 99999);
+	document.execCommand("copy");
+	navigator.clipboard.writeText(output.value);
+	document.getElementById("success").style.display = "none";
+	document.getElementById("successcopy").style.display = "block";
+}
+
+function tooglePassDisplay(e) {
+	let f = document.getElementById("password-output")
+	if(f.type == "password") {
+		f.type = "text"
+		e.innerText = "Masquer"
+	} else {
+		f.type = "password"
+		e.innerText = "Afficher"
+	}
+	document.getElementById("success").style.display = "none";
+	document.getElementById("successcopy").style.display = "none";
+}
+	</script>
+</head>
+<body>
+
+	<header>
+		<!-- Logo et titre -->
+		<div class="logo">
+			<a href="index.html">
+				<img src="assets/svg/logo_color.svg" alt="Logo AprylP">
+			</a>
+		</div>
+		<h1 class="site-title">Générateur de mot de passe aléatoires</h1>
+	</header>
+
+	<main>
+		<nav>
+			<!-- Zone de navigation -->
+			<ul class="navigation">
+				<li><a href="index.html">Accueil</a></li>
+				<li>Outils</li>
+				<li>Générateur de MdP</li>
+			</ul>
+		</nav>
+		<noscript>
+			<section class="alert">
+				<h3>⚠️ JavaScript n'est pas activé ⚠️</h3>
+				<p>Cette page nécessite JavaScript pour fonctionner.<br/>Merci d'activer javascript pour cette page dans les paramètres de votre navigateur.</p>
+			</section>
+		</noscript>
+		<section>
+			<h1>Paramètres</h1>
+			<h2>Longueur du mot de passe</h2>
+			<div class="alert" id="invalidlength" style="display: none">
+				<h3>⚠️ Paramètre incorrect ⚠️</h3>
+				<p>Le mot de passe doit contenir entre 1 et 128 caractères pour être généré.</p>
+			</div>
+			<div class="warn" id="smalllength" style="display: none">
+				<h3>⚠️ Attention ⚠️</h3>
+				<p>Votre mot de passe est très court.<br/>Il est conseillé d'avoir au minimum 8 caractères dans votre mot de passe.</p>
+			</div>
+			<label><input type="number" id="length" value="16" min="8" max="128"> caractères</label>
+			<p>Plus un mot de passe est long, plus il sera compliqué à forcer. La longeur minimale conseillée est 8 caractères. De nombreux sites ou applications imposent d'avoir des mots de passe d'au moins 10 ou 12 caractères. Un mot de passe de 16 ou 24 caractères est souvent suffisant, il n'est pas nécessaire de monter à 64 caractères de long.</p>
+			<h2>Types de caractères à utiliser</h2>
+			<p>Plus votre mot de passe contient des types de caractères différents, plus il sera difficile à forcer. Il est conseillé d'utiliser au minimum 3 types de caractères différents.</p>
+
+			<div class="alert" id="nochar" style="display: none">
+				<h3>⚠️ Paramètre incorrect ⚠️</h3>
+				<p>Aucun groupe de caractères n'a été sélectionné.</p>
+			</div>
+			<label title="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"><input type="checkbox" id="latin" checked>Alphabet latin</label>
+			<label title="0123456789"><input type="checkbox" id="numbers" checked>Chiffres</label>
+			<label title="!#$%&()*+,-./:;<=>?@[]^_`{|}~"><input type="checkbox" id="symbols" checked>Symboles et ponctuation</label>
+			<label title="àâçéèêëîïôûùüÿÀÂÇÉÈÊËÎÏÔÛÙÜŸœæŒÆ"><input type="checkbox" id="accents" checked>Caractères accentués</label>
+			<label title="αβγδεζηθικλμνξοπρστυφχψωΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩ"><input type="checkbox" id="greek">Alphabet grec</label>
+			<label title="абвгдеёжзийклмнопрстуфхцчшщъыьэюяәөҗңүһАБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯӘӨҖҢҮҺ"><input type="checkbox" id="cyrillic">Alphabet cyrillic</label>
+			<div class="flex">
+				<a class="btn" onclick="generatePassword()">Générer un mot de passe</a>
+			</div>
+			<h2>Résultat</h2>
+			<div class="info" id="success" style="display: none">
+				<h3>✓ Mot de passe généré</h3>
+				<p>Vous pouvez le générer à nouveau si ce mot de passe ne vous convient pas.</p>
+			</div>
+			<div class="flex">
+				<input type="password" id="password-output" disabled>
+			</div>
+			<div class="info" id="successcopy" style="display: none">
+				<h3>✓ Mot de passe copié</h3>
+				<p>Le mot de passe a été copié dans le presse papier.</p>
+			</div>
+			<div class="flex">
+				<a class="btn" onclick="tooglePassDisplay(this)">Afficher</a>
+				<a class="btn" onclick="copyToClipboard()">Copier</a>
+			</div>
+		</section>
+	</main>
+	<footer>
+		Créé par <i>TomAijerrie</i>
+	</footer>
+</body></html>
+
+
+
+
+
+
+
