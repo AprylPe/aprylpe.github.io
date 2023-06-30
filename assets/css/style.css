@@ -47,7 +47,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 main {
-	background-image: url("../svg/background.svg");
+	background-image: url("/assets/svg/background.svg");
 	background-size: 10%;
     background-attachment: fixed;
 	padding: 40px 0;
@@ -124,7 +124,7 @@ footer {
 	}
 
 	main {
-		background-image: url("../svg/background_dark.svg");
+		background-image: url("/assets/svg/background_dark.svg");
 	}
 
 	nav {
