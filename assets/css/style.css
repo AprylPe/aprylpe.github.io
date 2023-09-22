@@ -107,6 +107,28 @@ footer {
 	margin-bottom: 10px;
 }
 
+div.alert, section.alert {
+	border: solid 1px #f88;
+	background: #fdd !important;
+	padding:  12px;
+	text-align: center;
+	margin: 16px auto;
+}
+div.warn {
+	border: solid 1px #fc4;
+	background: #ffd !important;
+	padding:  12px;
+	text-align: center;
+	margin: 16px auto;
+}
+div.info {
+	border: solid 1px #88f;
+	background: #ddf !important;
+	padding:  12px;
+	text-align: center;
+	margin: 16px auto;
+}
+
 /* Thème sombre */
 
 @media (prefers-color-scheme: dark) {
@@ -150,6 +172,21 @@ footer {
 
 	h1, h2, h3, h4, h5, h6 {
 		color: #fff;
+	}
+
+	div.alert, section.alert {
+		border-color: #f44;
+		background: #422 !important;
+	}
+
+	div.warn {
+		border-color: #fb3;
+		background: #443 !important;
+	}
+
+	div.info {
+		border-color: #0af;
+		background: #345 !important;
 	}
 }
 
