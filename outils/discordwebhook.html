@@ -1,0 +1,1368 @@
+<!DOCTYPE html><html lang="fr">
+<head>
+	<meta charset="utf-8">
+	<title>Envoi de message sur un webhook Discord</title>
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" href="../assets/css/style.css">
+	<style>
+		body {
+			text-align: justify;
+		}
+		a, footer i {
+			text-decoration: none;
+		}
+		a:hover {color: #fb2}
+		.btn {
+			border-radius: 4px;
+			background-image: linear-gradient(254deg, #37e, #63b);
+			padding: 12px;
+			width: 250px;
+			display: inline-block;
+			text-align: center;
+			cursor: pointer;
+		}
+		a.btn, a.btn:hover {
+			color: #fff
+		}
+		.btn:hover {
+			background-image: linear-gradient(254deg, #48e, #74b);
+		}
+		input {
+			font-size: 14px;
+		}
+		label {
+			display: block;
+			margin-bottom: 8px;
+		}
+		div.flex {
+			display: flex;
+			align-items: stretch;
+		}
+		div.flex>* {
+			margin: 4px;
+			flex-grow: 1;
+		}
+		input[type="checkbox"] {
+			margin-right: 10px;
+		}
+		button {
+			margin-top: 10px;
+			margin-bottom: 10px;
+		}
+		input[type=text], input[type=password], input[type=number], input[type=datetime-local], textarea, select {
+			color: #333;
+			background-color: #fff;
+			border: solid 1px #000;
+		}
+		section h1, section h2 {
+			margin: 8px 0;
+		}
+
+		#msg-content, #msg-embeds>div, #msg-files {
+			display: flex;
+		}
+
+		#msg-content textarea, div.embed textarea {
+			flex: 1;
+			min-height: 5rem;
+			resize: none;
+		}
+
+		div.embed {
+			border: solid 2px #777777;
+			border-radius: 8px;
+			margin: 4px;
+		}
+
+		div.embed {
+			flex: 1;
+			display: flex;
+			padding-top: 8px;
+		}
+
+		div.embed div {
+			flex: 1;
+			display: flex;
+			flex-direction: column;
+		}
+
+		div.embed>div[data-role="container"] {
+			flex: none;
+			width: 56px;
+		}
+		div.embed>div[data-role="container"]>button {
+			padding: 0
+		}
+
+		div.embed-thumbnail {
+			flex: none !important;
+			width: 164px;
+			height: 128px;
+			flex-direction: row !important;
+			align-items: baseline;
+		}
+		div.embed-thumbnail input {
+			max-width: 138px;
+		}
+
+		div.embed input, div.embed textarea, select {
+			margin-bottom: 8px;
+			flex: 1;
+		}
+
+		button[data-role=remove] {
+			border: none;
+			background: none;
+			appearance: none;
+			width: 20px;
+			height: 20px;
+			display: flex;
+			justify-content: center;
+			align-items: center;
+			margin: 0;
+		}
+		[data-role=add] {
+			border: solid 3px #808080;
+			background: none;
+			appearance: none;
+			display: flex;
+			justify-content: center;
+			align-items: center;
+			margin: 8px;
+			padding: 16px;
+			flex: 1;
+			border-radius: 12px;
+		}
+		button[data-role=remove] img {
+			width: 10px;
+			height: 10px;
+			opacity: 0.5;
+		}
+		button[data-role=remove]:hover img, [data-role=add]:hover img {
+			opacity: 1;
+		}
+		[data-role=add] img {
+			width: 32px;
+			height: 32px;
+			opacity: 0.5;
+		}
+
+		input[type="color"] {
+			height: 100%;
+			border: none;
+			appearance: none;
+			background: transparent;
+			padding: 0;
+			margin: 0;
+			width: 32px;
+			overflow: hidden;
+		}
+
+		div.row {
+			flex-direction: row !important;
+		}
+
+		@media (prefers-color-scheme: dark) {
+			input[type=text], input[type=password], input[type=number], input[type=datetime-local], textarea, select {
+				color: #fff;
+				background-color: #232434;
+				border-color: #333;
+			}
+
+			button[data-role=remove] img, [data-role=add] img, [data-state="loaded"] label>img {
+				filter: invert(1);
+			}
+		}
+
+		[data-state="hidden"],
+		[data-state="empty"] [data-role="input"],
+		[data-state="empty"] [data-role="label"],
+		[data-state="empty"] [data-role="remove"],
+		[data-state="loaded"] [data-role="input"],
+		[data-state="empty"] label>img,
+		[data-state="loaded"] [data-role="add"] {
+			display: none;
+		}
+		[data-state="loaded"] {
+			display: inline-flex;
+			height: 160px;
+			width: 50%;
+		}
+		[data-state="loaded"] label {
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			justify-content: space-between;
+		}
+		[data-state="loaded"] label>img {
+			width: 15%;
+		}
+		[data-role="select-source"] {
+			width: 12px;
+		}
+		[data-role="select-source"] + label {
+			padding-left: 24px;
+			margin-top: -24px;
+		}
+		[data-role="select-source"] +*+*+ select, [data-role="select-source"]:checked +*+ input {
+			display: none;
+		}
+		[data-role="select-source"]:checked +*+*+ select {
+			display: block;
+			padding: 2px;
+		}
+
+	</style>
+	<script>
+function addElement(adresse) {
+	let contentContainer;
+	let containerId;
+
+	console.log(adresse)
+	if(adresse.match(/^embeds\.[0-9]\./ig)) {
+		// élément d'un embed
+		let element = adresse.match(/[^0-9]+/g)[1]
+		console.log(element)
+		switch(element) {
+			case ".color":
+				// Créer un input type color
+				const colorInput = document.createElement("input");
+				colorInput.type = "color";
+				colorInput.setAttribute("data-adresse", adresse);
+				colorInput.setAttribute("data-role", "input");
+
+				// Créer un bouton pour retirer la couleur
+				const removeColorBtn = document.createElement("button");
+				removeColorBtn.setAttribute("data-adresse", adresse);
+				removeColorBtn.setAttribute("data-role", "remove");
+				removeColorBtn.setAttribute("title", "Retirer la couleur");
+				removeColorBtn.innerHTML = '<img src="../assets/svg/x.svg" alt="X">';
+
+				// Écouter les événements click des éléments créés
+				removeColorBtn.addEventListener("click", handleEvent);
+
+				// Ajouter l'input de couleur et le bouton au conteneur de l'élément
+				const colorContainer = document.querySelector(`[data-adresse="${adresse}"][data-role="container"]`);
+				if (colorContainer) {
+					colorContainer.innerHTML = ""
+					colorContainer.appendChild(colorInput);
+					colorContainer.appendChild(removeColorBtn);
+				}
+				break
+			case ".description":
+				// Créer un input type texte multiligne
+				const descInput = document.createElement("textarea");
+				descInput.setAttribute("data-adresse", adresse);
+				descInput.setAttribute("data-role", "input");
+				descInput.setAttribute("placeholder", "Description de l'embed");
+
+				const removeDescBtn = document.createElement("button");
+				removeDescBtn.setAttribute("data-adresse", adresse);
+				removeDescBtn.setAttribute("data-role", "remove");
+				removeDescBtn.setAttribute("title", "Retirer la description");
+				removeDescBtn.innerHTML = '<img src="../assets/svg/x.svg" alt="X">';
+
+				// Écouter les événements click des éléments créés
+				removeDescBtn.addEventListener("click", handleEvent);
+
+				const descContainer = document.querySelector(`[data-adresse="${adresse}"][data-role="container"]`);
+				if (descContainer) {
+					descContainer.innerHTML = ""
+					descContainer.appendChild(descInput);
+					descContainer.appendChild(removeDescBtn);
+				}
+				break
+			case ".title":
+				// Créer un input type texte pour le titre
+				const titleInput = document.createElement("input");
+				titleInput.setAttribute("type", "text");
+				titleInput.setAttribute("data-adresse", adresse);
+				titleInput.setAttribute("data-role", "input");
+				titleInput.setAttribute("placeholder", "Titre de l'embed");
+
+				// Créer un bouton pour retirer le titre
+				const removeTitleBtn = document.createElement("button");
+				removeTitleBtn.setAttribute("data-adresse", adresse);
+				removeTitleBtn.setAttribute("data-role", "remove");
+				removeTitleBtn.setAttribute("title", "Retirer le titre");
+				removeTitleBtn.innerHTML = '<img src="../assets/svg/x.svg" alt="X">';
+
+				const titleRow = document.createElement("div");
+				titleRow.className = "row";
+				titleRow.appendChild(titleInput);
+				titleRow.appendChild(removeTitleBtn);
+
+				// Écouter les événements click des éléments créés
+				removeTitleBtn.addEventListener("click", handleEvent);
+
+				// Ajouter le div contenant le titre et le bouton au conteneur de l'élément
+				const titleContainer = document.querySelector(`[data-adresse="${adresse}"][data-role="container"]`);
+				if (titleContainer) {
+					titleContainer.appendChild(titleRow);
+				}
+
+				// Créer un conteneur pour l'URL de l'embed
+				const urlContainer = document.createElement("div");
+				urlContainer.className = "row";
+				urlContainer.setAttribute("data-adresse", adresse.replace("title","url"));
+				urlContainer.setAttribute("data-role", "container");
+
+				// Ajouter le conteneur de l'URL au conteneur de l'élément
+				if (titleContainer) {
+					titleContainer.appendChild(urlContainer);
+					initElement(adresse.replace("title","url"));
+				}
+				break;
+			case ".url":
+				const urlInput = document.createElement("input");
+				urlInput.type = "text";
+				urlInput.setAttribute("data-adresse", adresse);
+				urlInput.setAttribute("data-role", "input");
+				urlInput.setAttribute("placeholder", "https://example.com/");
+
+				const removeUrlBtn = document.createElement("button");
+				removeUrlBtn.setAttribute("data-adresse", adresse);
+				removeUrlBtn.setAttribute("data-role", "remove");
+				removeUrlBtn.setAttribute("title", "Retirer le lien");
+				removeUrlBtn.innerHTML = '<img src="../assets/svg/x.svg" alt="X">';
+
+				// Écouter les événements click des éléments créés
+				removeUrlBtn.addEventListener("click", handleEvent);
+
+				const linkContainer = document.querySelector(`[data-adresse="${adresse}"][data-role="container"]`);
+				if (linkContainer) {
+					linkContainer.innerHTML = ""
+					linkContainer.appendChild(urlInput);
+					linkContainer.appendChild(removeUrlBtn);
+				}
+				break
+			case ".timestamp":
+				// Créer un input type datetime-local pour le timestamp
+				const timestampInput = document.createElement("input");
+				timestampInput.type = "datetime-local";
+				timestampInput.setAttribute("data-adresse", adresse);
+				timestampInput.setAttribute("data-role", "input");
+				timestampInput.setAttribute("placeholder", "Sélectionnez une date et une heure");
+
+				// Créer un bouton pour retirer le timestamp
+				const removeTimestampBtn = document.createElement("button");
+				removeTimestampBtn.setAttribute("data-adresse", adresse);
+				removeTimestampBtn.setAttribute("data-role", "remove");
+				removeTimestampBtn.setAttribute("title", "Retirer le timestamp");
+				removeTimestampBtn.innerHTML = '<img src="../assets/svg/x.svg" alt="X">';
+
+				// Écouter les événements click des éléments créés
+				removeTimestampBtn.addEventListener("click", handleEvent);
+
+				// Créer un div pour le timestamp et le bouton (dans une "row")
+				const timestampRow = document.createElement("div");
+				timestampRow.className = "row";
+				timestampRow.appendChild(timestampInput);
+				timestampRow.appendChild(removeTimestampBtn);
+
+				// Ajouter le div contenant le timestamp et le bouton au conteneur de l'élément
+				const timestampContainer = document.querySelector(`[data-adresse="${adresse}"][data-role="container"]`);
+				if (timestampContainer) {
+					timestampContainer.appendChild(timestampRow);
+				}
+				break;
+			case ".author":
+				// Créer un input type texte pour author.name
+				const authorNameInput = document.createElement("input");
+				authorNameInput.setAttribute("type", "text");
+				authorNameInput.setAttribute("data-adresse", adresse + ".name");
+				authorNameInput.setAttribute("data-role", "input");
+				authorNameInput.setAttribute("placeholder", "Nom de l'auteur");
+
+				// Créer un bouton pour retirer l'auteur
+				const removeAuthorBtn = document.createElement("button");
+				removeAuthorBtn.setAttribute("data-adresse", adresse);
+				removeAuthorBtn.setAttribute("data-role", "remove");
+				removeAuthorBtn.setAttribute("title", "Retirer l'auteur");
+				removeAuthorBtn.innerHTML = '<img src="../assets/svg/x.svg" alt="X">';
+
+				// Créer un div pour l'input author.name et le bouton de suppression (dans une "row")
+				const authorRow = document.createElement("div");
+				authorRow.className = "row";
+				authorRow.appendChild(authorNameInput);
+				authorRow.appendChild(removeAuthorBtn);
+
+				// Écouter les événements click du bouton de suppression
+				removeAuthorBtn.addEventListener("click", handleEvent);
+
+				// Créer un div pour le conteneur de l'URL de l'auteur (dans une "row")
+				const authorUrlContainer = document.createElement("div");
+				authorUrlContainer.className = "row";
+				authorUrlContainer.setAttribute("data-adresse", adresse + ".url");
+				authorUrlContainer.setAttribute("data-role", "container");
+
+				// Créer un div pour le conteneur de l'icône de l'auteur (dans une "row")
+				const authorIconUrlContainer = document.createElement("div");
+				authorIconUrlContainer.className = "row";
+				authorIconUrlContainer.setAttribute("data-adresse", adresse + ".icon_url");
+				authorIconUrlContainer.setAttribute("data-role", "container");
+
+				// Ajouter le conteneur de l'URL de l'auteur et le conteneur de l'icône de l'auteur au conteneur de l'élément
+				const authorContainer = document.querySelector(`[data-adresse="${adresse}"][data-role="container"]`);
+				if (authorContainer) {
+					authorContainer.appendChild(authorRow);
+					authorContainer.appendChild(authorUrlContainer);
+					authorContainer.appendChild(authorIconUrlContainer);
+					initElement(adresse + ".url");
+					initElement(adresse + ".icon_url");
+				}
+				break;
+			case ".author.url":
+				// Créer un input type texte pour l'URL de l'auteur
+				const authorUrlInput = document.createElement("input");
+				authorUrlInput.setAttribute("type", "text");
+				authorUrlInput.setAttribute("data-adresse", adresse);
+				authorUrlInput.setAttribute("data-role", "input");
+				authorUrlInput.setAttribute("placeholder", "URL de l'auteur");
+
+				// Créer un bouton pour retirer l'URL de l'auteur
+				const removeAuthorUrlBtn = document.createElement("button");
+				removeAuthorUrlBtn.setAttribute("data-adresse", adresse);
+				removeAuthorUrlBtn.setAttribute("data-role", "remove");
+				removeAuthorUrlBtn.setAttribute("title", "Retirer l'URL de l'auteur");
+				removeAuthorUrlBtn.innerHTML = '<img src="../assets/svg/x.svg" alt="X">';
+
+				// Créer un div pour l'input de l'URL de l'auteur et le bouton de suppression (dans une "row")
+				const authorUrlRow = document.createElement("div");
+				authorUrlRow.className = "row";
+				authorUrlRow.appendChild(authorUrlInput);
+				authorUrlRow.appendChild(removeAuthorUrlBtn);
+
+				// Écouter les événements click du bouton de suppression
+				removeAuthorUrlBtn.addEventListener("click", handleEvent);
+
+				// Ajouter l'input de l'URL de l'auteur et le bouton de suppression au conteneur de l'URL
+				const authorLinkContainer = document.querySelector(`[data-adresse="${adresse}"][data-role="container"]`);
+				if (authorLinkContainer) {
+					authorLinkContainer.appendChild(authorUrlRow);
+				}
+				break;
+			case ".author.icon_url":
+				// Créer une div pour le groupe d'options de l'icône de l'auteur
+				const authorIconOptions = document.createElement("div");
+
+				// Créer une checkbox pour indiquer l'utilisation d'un fichier joint
+				const useFileCheckbox = document.createElement("input");
+				useFileCheckbox.setAttribute("type", "checkbox");
+				useFileCheckbox.setAttribute("data-adresse", adresse);
+				useFileCheckbox.setAttribute("id", adresse);
+				useFileCheckbox.setAttribute("data-role", "select-source");
+				useFileCheckbox.setAttribute("title", "Utiliser un fichier joint comme icône de l'auteur");
+
+				const useFileLabel = document.createElement("label");
+				useFileLabel.setAttribute("for", adresse);
+				useFileLabel.setAttribute("title", "Utiliser un fichier joint comme icône de l'auteur");
+				useFileLabel.innerText = "Utiliser un fichier joint"
+
+				// Créer un champ de texte pour l'URL externe de l'icône de l'auteur
+				const authorIconUrlInput = document.createElement("input");
+				authorIconUrlInput.setAttribute("type", "text");
+				authorIconUrlInput.setAttribute("data-adresse", adresse + ".url");
+				authorIconUrlInput.setAttribute("data-role", "input-url");
+				authorIconUrlInput.setAttribute("placeholder", "URL de l'icône de l'auteur");
+
+				// Créer une liste déroulante pour choisir un fichier joint
+				const authorIconFileSelect = document.createElement("select");
+				authorIconFileSelect.setAttribute("data-adresse", adresse + ".url");
+				authorIconFileSelect.setAttribute("data-role", "input-file");
+
+				// Ajouter des options à la liste déroulante pour chaque fichier joint (10 fichiers au total)
+				for (let i = 1; i <= 10; i++) {
+					const option = document.createElement("option");
+					option.value = i;
+					option.text = `Fichier ${i}`;
+					authorIconFileSelect.appendChild(option);
+				}
+
+				// Créer un bouton "Remove" pour l'icône de l'auteur
+				const removeAuthorIconBtn = document.createElement("button");
+				removeAuthorIconBtn.setAttribute("data-adresse", adresse);
+				removeAuthorIconBtn.setAttribute("data-role", "remove");
+				removeAuthorIconBtn.setAttribute("title", "Retirer l'icône de l'auteur");
+				removeAuthorIconBtn.innerHTML = '<img src="../assets/svg/x.svg" alt="X">';
+
+				// Ajouter les éléments au groupe d'options
+				authorIconOptions.appendChild(useFileCheckbox);
+				authorIconOptions.appendChild(useFileLabel);
+				authorIconOptions.appendChild(authorIconUrlInput);
+				authorIconOptions.appendChild(authorIconFileSelect);
+
+				// Ajouter le groupe d'options et le bouton "Remove" au conteneur de l'icône de l'auteur
+				const authorIconContainer = document.querySelector(`[data-adresse="${adresse}"][data-role="container"]`);
+				if (authorIconContainer) {
+					authorIconContainer.appendChild(authorIconOptions);
+					authorIconContainer.appendChild(removeAuthorIconBtn);
+					removeAuthorIconBtn.addEventListener("click", handleEvent);
+				}
+				break
+			case ".fields.":
+				// Créer un div pour le champ du field
+				const fieldContainer = document.createElement("div");
+
+				// Créer un champ pour le nom du field
+				const nameInput = document.createElement("input");
+				nameInput.setAttribute("type", "text");
+				nameInput.setAttribute("data-adresse", adresse + ".name");
+				nameInput.setAttribute("data-role", "input");
+				nameInput.setAttribute("placeholder", "Nom du Field");
+
+				// Créer un champ pour la valeur du field (multiligne)
+				const valueTextarea = document.createElement("textarea");
+				valueTextarea.setAttribute("data-adresse", adresse + ".value");
+				valueTextarea.setAttribute("data-role", "input");
+				valueTextarea.setAttribute("placeholder", "Valeur du Field");
+
+				// Créer un champ pour indiquer si le field est en ligne (inline)
+				const inlineLabel = document.createElement("label");
+
+				const inlineCheckbox = document.createElement("input");
+				inlineCheckbox.setAttribute("type", "checkbox");
+				inlineCheckbox.setAttribute("data-adresse", adresse + ".inline");
+				inlineCheckbox.setAttribute("data-role", "input");
+				inlineCheckbox.setAttribute("title", "Field en ligne");
+
+				// Ajouter la checkbox au label
+				inlineLabel.appendChild(inlineCheckbox);
+
+				// Ajouter le texte "Affichage en ligne" au label
+				inlineLabel.appendChild(document.createTextNode("Affichage en ligne"));
+
+				// Ajouter les champs au conteneur du field
+				fieldContainer.appendChild(nameInput);
+				fieldContainer.appendChild(valueTextarea);
+				fieldContainer.appendChild(inlineLabel);
+
+				// Créer un bouton "Remove" pour le field
+				const removeFieldBtn = document.createElement("button");
+				removeFieldBtn.setAttribute("data-adresse", adresse);
+				removeFieldBtn.setAttribute("data-role", "remove");
+				removeFieldBtn.setAttribute("title", "Retirer ce field");
+				removeFieldBtn.innerHTML = '<img src="../assets/svg/x.svg" alt="X">';
+
+				// Écouter les événements click du bouton "remove"
+				removeFieldBtn.addEventListener("click", handleEvent);
+
+
+				// Ajouter le field au conteneur des fields
+				const fieldsContainer = document.querySelector(`[data-adresse="${adresse}"][data-role="container"]`);
+				if (fieldsContainer) {
+					fieldsContainer.appendChild(fieldContainer);
+					fieldsContainer.appendChild(removeFieldBtn);
+				}
+
+				let nums = adresse.match(/[0-9]+/g)
+
+				// Vérifier si le container suivant existe (FF < 24) et s'il est vide
+				const nextFieldContainer = document.querySelector(`[data-adresse="embeds.${nums[0]}.fields.${parseInt(nums[1]) + 1}"][data-role="container"]`);
+				if (nextFieldContainer && nextFieldContainer.childElementCount === 0) {
+					initElement(`embeds.${nums[0]}.fields.${parseInt(nums[1]) + 1}`);
+				}
+				break;
+			case ".image":
+				// Créer une div pour le groupe d'options de l'image
+				const imageOptionsContainer = document.createElement("div");
+
+				// Créer une checkbox pour indiquer l'utilisation d'un fichier joint
+				const useFileCheckboxImage = document.createElement("input");
+				useFileCheckboxImage.setAttribute("type", "checkbox");
+				useFileCheckboxImage.setAttribute("data-adresse", adresse + ".url");
+				useFileCheckboxImage.setAttribute("id", adresse + ".url");
+				useFileCheckboxImage.setAttribute("data-role", "select-source");
+				useFileCheckboxImage.setAttribute("title", "Utiliser un fichier joint comme image");
+
+				const useFileLabelImage = document.createElement("label");
+				useFileLabelImage.setAttribute("for", adresse + ".url");
+				useFileLabelImage.setAttribute("title", "Utiliser un fichier joint comme image");
+				useFileLabelImage.innerText = "Utiliser un fichier joint"
+
+				// Créer un champ de texte pour l'URL externe de l'image
+				const imageUrlInput = document.createElement("input");
+				imageUrlInput.setAttribute("type", "text");
+				imageUrlInput.setAttribute("data-adresse", adresse + ".url");
+				imageUrlInput.setAttribute("data-role", "input-url");
+				imageUrlInput.setAttribute("placeholder", "URL de l'image");
+
+				// Créer une liste déroulante pour choisir un fichier joint
+				const imageFileSelect = document.createElement("select");
+				imageFileSelect.setAttribute("data-adresse", adresse + ".url");
+				imageFileSelect.setAttribute("data-role", "input-file");
+
+				// Ajouter des options à la liste déroulante pour chaque fichier joint (10 fichiers au total)
+				for (let i = 1; i <= 10; i++) {
+					const option = document.createElement("option");
+					option.value = i;
+					option.text = `Fichier ${i}`;
+					imageFileSelect.appendChild(option);
+				}
+
+				// Créer un bouton "Remove" pour l'image
+				const removeImageBtn = document.createElement("button");
+				removeImageBtn.setAttribute("data-adresse", adresse);
+				removeImageBtn.setAttribute("data-role", "remove");
+				removeImageBtn.setAttribute("title", "Retirer l'image");
+				removeImageBtn.innerHTML = '<img src="../assets/svg/x.svg" alt="X">';
+
+				// Ajouter les éléments au groupe d'options
+				imageOptionsContainer.appendChild(useFileCheckboxImage);
+				imageOptionsContainer.appendChild(useFileLabelImage);
+				imageOptionsContainer.appendChild(imageUrlInput);
+				imageOptionsContainer.appendChild(imageFileSelect);
+
+				// Ajouter le groupe d'options et le bouton "Remove" au conteneur de l'image
+				const imageContainer = document.querySelector(`[data-adresse="${adresse}"][data-role="container"]`);
+				if (imageContainer) {
+					imageContainer.appendChild(imageOptionsContainer);
+					imageContainer.appendChild(removeImageBtn);
+					removeImageBtn.addEventListener("click", handleEvent);
+				}
+				break;
+			case ".thumbnail":
+				// Créer une div pour le groupe d'options du thumbnail
+				const thumbnailOptionsContainer = document.createElement("div");
+
+				// Créer une checkbox pour indiquer l'utilisation d'un fichier joint
+				const useFileCheckboxThumbnail = document.createElement("input");
+				useFileCheckboxThumbnail.setAttribute("type", "checkbox");
+				useFileCheckboxThumbnail.setAttribute("data-adresse", adresse + ".url");
+				useFileCheckboxThumbnail.setAttribute("id", adresse + ".url");
+				useFileCheckboxThumbnail.setAttribute("data-role", "select-source");
+				useFileCheckboxThumbnail.setAttribute("title", "Utiliser un fichier joint comme thumbnail");
+
+				const useFileLabelThumbnail = document.createElement("label");
+				useFileLabelThumbnail.setAttribute("for", adresse + ".url");
+				useFileLabelThumbnail.setAttribute("title", "Utiliser un fichier joint comme thumbnail");
+				useFileLabelThumbnail.innerText = "Utiliser un fichier joint";
+
+				// Créer un champ de texte pour l'URL externe du thumbnail
+				const thumbnailUrlInput = document.createElement("input");
+				thumbnailUrlInput.setAttribute("type", "text");
+				thumbnailUrlInput.setAttribute("data-adresse", adresse + ".url");
+				thumbnailUrlInput.setAttribute("data-role", "input-url");
+				thumbnailUrlInput.setAttribute("placeholder", "URL du thumbnail");
+
+				// Créer une liste déroulante pour choisir un fichier joint
+				const thumbnailFileSelect = document.createElement("select");
+				thumbnailFileSelect.setAttribute("data-adresse", adresse + ".url");
+				thumbnailFileSelect.setAttribute("data-role", "input-file");
+
+				// Ajouter des options à la liste déroulante pour chaque fichier joint (10 fichiers au total)
+				for (let i = 1; i <= 10; i++) {
+					const option = document.createElement("option");
+					option.value = i;
+					option.text = `Fichier ${i}`;
+					thumbnailFileSelect.appendChild(option);
+				}
+
+				// Créer un bouton "Remove" pour le thumbnail
+				const removeThumbnailBtn = document.createElement("button");
+				removeThumbnailBtn.setAttribute("data-adresse", adresse);
+				removeThumbnailBtn.setAttribute("data-role", "remove");
+				removeThumbnailBtn.setAttribute("title", "Retirer le thumbnail");
+				removeThumbnailBtn.innerHTML = '<img src="../assets/svg/x.svg" alt="X">';
+
+				// Ajouter les éléments au groupe d'options
+				thumbnailOptionsContainer.appendChild(useFileCheckboxThumbnail);
+				thumbnailOptionsContainer.appendChild(useFileLabelThumbnail);
+				thumbnailOptionsContainer.appendChild(thumbnailUrlInput);
+				thumbnailOptionsContainer.appendChild(thumbnailFileSelect);
+
+				// Ajouter le groupe d'options et le bouton "Remove" au conteneur du thumbnail
+				const thumbnailContainer = document.querySelector(`[data-adresse="${adresse}"][data-role="container"]`);
+				if (thumbnailContainer) {
+					thumbnailContainer.appendChild(thumbnailOptionsContainer);
+					thumbnailContainer.appendChild(removeThumbnailBtn);
+					removeThumbnailBtn.addEventListener("click", handleEvent);
+				}
+				break;
+			case ".footer":
+				// Créer un input type texte pour footer.text
+				const footerTextInput = document.createElement("input");
+				footerTextInput.setAttribute("type", "text");
+				footerTextInput.setAttribute("data-adresse", adresse + ".text");
+				footerTextInput.setAttribute("data-role", "input");
+				footerTextInput.setAttribute("placeholder", "Texte du footer");
+				footerTextInput.setAttribute("required", "");
+
+				// Créer un bouton pour retirer le footer
+				const removeFooterBtn = document.createElement("button");
+				removeFooterBtn.setAttribute("data-adresse", adresse);
+				removeFooterBtn.setAttribute("data-role", "remove");
+				removeFooterBtn.setAttribute("title", "Retirer le footer");
+				removeFooterBtn.innerHTML = '<img src="../assets/svg/x.svg" alt="X">';
+
+				// Créer un div pour l'input footer.text et le bouton de suppression (dans une "row")
+				const footerTextRow = document.createElement("div");
+				footerTextRow.className = "row";
+				footerTextRow.appendChild(footerTextInput);
+				footerTextRow.appendChild(removeFooterBtn);
+
+				// Écouter les événements click du bouton de suppression
+				removeFooterBtn.addEventListener("click", handleEvent);
+
+				// Créer un div pour le conteneur footer.icon_url (dans une "row") - INITIALIZATION VIDE
+				const footerIconUrlContainer = document.createElement("div");
+				footerIconUrlContainer.className = "row";
+				footerIconUrlContainer.setAttribute("data-adresse", adresse + ".icon_url");
+				footerIconUrlContainer.setAttribute("data-role", "container");
+
+				// Ajouter l'input footer.text au conteneur du footer
+				const footerContainer = document.querySelector(`[data-adresse="${adresse}"][data-role="container"]`);
+				if (footerContainer) {
+					footerContainer.appendChild(footerTextRow);
+					footerContainer.appendChild(footerIconUrlContainer); // Ajout du conteneur ici
+				}
+
+				// Initialiser le conteneur footer.icon_url (il restera vide pour l'instant)
+				initElement(adresse + ".icon_url");
+				break;
+			case ".footer.icon_url":
+				// Créer une div pour le groupe d'options de l'icône du footer
+				const footerIconOptions = document.createElement("div");
+
+				// Créer une checkbox pour indiquer l'utilisation d'un fichier joint
+				const useFileCheckboxFooterIcon = document.createElement("input");
+				useFileCheckboxFooterIcon.setAttribute("type", "checkbox");
+				useFileCheckboxFooterIcon.setAttribute("data-adresse", adresse);
+				useFileCheckboxFooterIcon.setAttribute("id", adresse + "-use-file");
+				useFileCheckboxFooterIcon.setAttribute("data-role", "select-source");
+				useFileCheckboxFooterIcon.setAttribute("title", "Utiliser un fichier joint comme icône du footer");
+
+				const useFileLabelFooterIcon = document.createElement("label");
+				useFileLabelFooterIcon.setAttribute("for", adresse + "-use-file");
+				useFileLabelFooterIcon.setAttribute("title", "Utiliser un fichier joint comme icône du footer");
+				useFileLabelFooterIcon.innerText = "Utiliser un fichier joint";
+
+				// Créer un champ de texte pour l'URL externe de l'icône du footer
+				const footerIconUrlInput = document.createElement("input");
+				footerIconUrlInput.setAttribute("type", "text");
+				footerIconUrlInput.setAttribute("data-adresse", adresse);
+				footerIconUrlInput.setAttribute("data-role", "input-url");
+				footerIconUrlInput.setAttribute("placeholder", "URL de l'icône du footer");
+
+				// Créer une liste déroulante pour choisir un fichier joint
+				const footerIconFileSelect = document.createElement("select");
+				footerIconFileSelect.setAttribute("data-adresse", adresse);
+				footerIconFileSelect.setAttribute("data-role", "input-file");
+
+				// Ajouter des options à la liste déroulante pour chaque fichier joint (10 fichiers au total)
+				for (let i = 1; i <= 10; i++) {
+					const option = document.createElement("option");
+					option.value = i;
+					option.text = `Fichier ${i}`;
+					footerIconFileSelect.appendChild(option);
+				}
+
+				// Créer un bouton "Remove" pour l'icône du footer
+				const removeFooterIconUrlBtn = document.createElement("button");
+				removeFooterIconUrlBtn.setAttribute("data-adresse", adresse);
+				removeFooterIconUrlBtn.setAttribute("data-role", "remove");
+				removeFooterIconUrlBtn.setAttribute("title", "Retirer l'icône du footer");
+				removeFooterIconUrlBtn.innerHTML = '<img src="../assets/svg/x.svg" alt="X">';
+
+				// Ajouter les éléments au groupe d'options
+				footerIconOptions.appendChild(useFileCheckboxFooterIcon);
+				footerIconOptions.appendChild(useFileLabelFooterIcon);
+				footerIconOptions.appendChild(footerIconUrlInput);
+				footerIconOptions.appendChild(footerIconFileSelect);
+
+				// Ajouter le groupe d'options et le bouton "Remove" au conteneur de l'icône du footer
+				const footerIconContainer = document.querySelector(`[data-adresse="${adresse}"][data-role="container"]`);
+				if (footerIconContainer) {
+					footerIconContainer.appendChild(footerIconOptions);
+					footerIconContainer.appendChild(removeFooterIconUrlBtn);
+					removeFooterIconUrlBtn.addEventListener("click", handleEvent);
+				}
+				break;
+
+			// etc.
+		}
+		return
+	}
+	switch (adresse) {
+		case "content":
+			// Contenu du message
+			const contentInput = document.createElement("textarea");
+			contentInput.setAttribute("data-adresse", "content");
+			contentInput.setAttribute("data-role", "input");
+
+			// Bouton pour retirer le message
+			const removeBtn = document.createElement("button");
+			removeBtn.setAttribute("data-adresse", "content");
+			removeBtn.setAttribute("data-role", "remove");
+			removeBtn.setAttribute("title", "Retirer le message");
+			removeBtn.innerHTML = '<img src="../assets/svg/x.svg" alt="X">';
+
+			// Gestion clic sur les éléments créés
+			removeBtn.addEventListener("click", handleEvent);
+
+			// Ajout du bouton au conteneur du message
+			containerId = "msg-content";
+			contentContainer = document.getElementById(containerId);
+			if (contentContainer) {
+				contentContainer.appendChild(contentInput);
+				contentContainer.appendChild(removeBtn);
+			}
+			break;
+		case "embeds.0":
+		case "embeds.1":
+		case "embeds.2":
+		case "embeds.3":
+		case "embeds.4":
+		case "embeds.5":
+		case "embeds.6":
+		case "embeds.7":
+		case "embeds.8":
+		case "embeds.9":
+			const embedNumber = adresse.split(".")[1];
+			const newEmbed = document.createElement("div");
+			newEmbed.className = "embed";
+			newEmbed.innerHTML = `<div data-role="container" data-adresse="embeds.${embedNumber}.color" class="row"></div>
+<div>
+	<!-- Partie haute de l'embed -->
+	<div class="row">
+		<div>
+			<div data-role="container" data-adresse="embeds.${embedNumber}.author"></div>
+			<div data-adresse="embeds.${embedNumber}.title" data-role="container"></div>
+			<div data-adresse="embeds.${embedNumber}.description" data-role="container" class="row"></div>
+			<div class="embed-fields">
+				${Array.from({ length: 25 }, (_, i) => `<div data-adresse="embeds.${embedNumber}.fields.${i}" data-role="container" class="row"></div>`).join('')}
+			</div>
+		</div>
+		<div data-adresse="embeds.${embedNumber}.thumbnail" data-role="container" class="embed-thumbnail"></div>
+	</div>
+	<div data-adresse="embeds.${embedNumber}.image" data-role="container" class="row"></div>
+	<!-- Zone pied de page -->
+	<div class="row">
+		<div class="embed-footer" data-adresse="embeds.${embedNumber}.footer" data-role="container"></div>
+		<div data-adresse="embeds.${embedNumber}.timestamp" data-role="container" class="row"></div>
+	</div>
+</div>`;//<script>;
+
+			// Bouton pour supprimer l'embed
+			const removeEmbedBtn = document.createElement("button");
+			removeEmbedBtn.setAttribute("data-adresse", adresse);
+			removeEmbedBtn.setAttribute("data-role", "remove");
+			removeEmbedBtn.setAttribute("title", "Retirer l'embed");
+			removeEmbedBtn.innerHTML = '<img src="../assets/svg/x.svg" alt="X">';
+			removeEmbedBtn.addEventListener("click", handleEvent);
+
+			const embedContainer = document.querySelector(`[data-role="container"][data-adresse="${adresse}"]`);
+			if (embedContainer) {
+				embedContainer.appendChild(newEmbed);
+				embedContainer.appendChild(removeEmbedBtn);
+			}
+
+			// Initialisation des conteneurs ajoutés dans le innerHTML
+			const embedContainers = newEmbed.querySelectorAll('[data-role="container"]');
+			embedContainers.forEach((container) => {
+				const adresse = container.getAttribute("data-adresse");
+				if(adresse.match(/fields.[1-9]/)) return
+				initElement(adresse);
+			});
+
+			// Si le numéro n'est pas le 9, initialiser l'embed suivant
+			if (embedNumber < 9) {
+				const nextEmbedContainer = document.querySelector(`[data-role="container"][data-adresse="embeds.${embedNumber*1 + 1}"] *`);
+				if (!nextEmbedContainer) { // Si le container est vide
+					initElement("embeds." + (parseInt(embedNumber) + 1));
+				}
+			}
+			break;
+		default:
+			// Adresse invalide, ne rien faire
+			return;
+	}
+}
+
+function initElement(adresse) {
+	// Créez un bouton pour ajouter un élément en fonction de l'adresse
+	let addButton = document.createElement("button");
+	addButton.setAttribute("data-adresse", adresse);
+	addButton.setAttribute("data-role", "add");
+
+	switch(adresse) {
+		case "content":
+			addButton.setAttribute("title", "Ajouter du texte");
+			break
+		case "embeds.0":
+		case "embeds.1":
+		case "embeds.2":
+		case "embeds.3":
+		case "embeds.4":
+		case "embeds.5":
+		case "embeds.6":
+		case "embeds.7":
+		case "embeds.8":
+		case "embeds.9":
+			addButton.setAttribute("title", "Ajouter un embed");
+			break
+		case "files":
+			const filesContainer = document.querySelector('[data-adresse="files"]');
+			if (filesContainer) {
+				for (let i = 0; i < 10; i++) {
+					// Créer un nouvel élément de fichier
+					const fileElement = document.createElement('div');
+					fileElement.setAttribute('data-adresse', `files.${i}`);
+					fileElement.setAttribute('data-role', 'container');
+					fileElement.setAttribute('data-state', 'hidden');
+
+					// Remplacer le contenu HTML de l'élément avec le modèle spécifique
+					fileElement.innerHTML = `
+						<label>
+							<h3>Fichier ${i + 1}</h3>
+							<div data-role="add" data-adresse="dummy"><img src="../assets/svg/plus.svg" alt="+" /></div>
+							<img src="../assets/svg/file.svg" alt="" />
+							<input type="file" data-role="input" data-adresse="files.${i}">
+							<span data-role="label" data-adresse="files.${i}"></span>
+						</label>
+						<button data-role="remove" data-adresse="files.${i}"><img src="../assets/svg/x.svg" alt="X" /></button>
+					`;
+
+					// Ajouter l'élément généré au container "files"// <script>
+					filesContainer.appendChild(fileElement);
+				}
+				const fileInputs = document.querySelectorAll('input[type="file"][data-adresse^="files."]');
+				fileInputs.forEach((input) => {
+					// Écoutez l'événement "change" sur l'input
+					input.addEventListener("change", updateFileInputs);
+				});
+
+				updateFileInputs(true)
+				return
+			}
+			break
+		default:
+			addButton.setAttribute("title", "Ajouter un élément");
+	}
+
+	// Ajoutez une image SVG au bouton (remplacez "image.svg" par le chemin de votre image SVG)
+	addButton.innerHTML = '<img src="../assets/svg/plus.svg" alt="+">';
+
+	// Écoutez l'événement click sur le bouton d'ajout
+	addButton.addEventListener("click", handleEvent);
+
+	// Sélectionnez le conteneur en fonction des attributs data-role et data-adresse
+	const containers = document.querySelectorAll(`[data-role="container"][data-adresse="${adresse}"]`);
+	if (containers.length > 0) {
+		// Ajoutez le bouton d'ajout au premier conteneur trouvé
+		containers[0].appendChild(addButton);
+	}
+}
+
+function handleEvent(event) {
+	event.stopPropagation();
+	handleAction(event.target)
+}
+
+function handleAction(element) {
+	if(element.tagName == "BODY") return
+
+	// Récupérez les valeurs data-role et data-adresse de l'élément
+	const dataRole = element.getAttribute("data-role");
+	const dataAdresse = element.getAttribute("data-adresse");
+
+	// Si data-role ou data-adresse n'est pas défini, quittez la fonction sans bloquer la propagation
+	if (!dataRole || !dataAdresse) {
+		handleAction(element.parentElement)
+		return
+	}
+
+	// Utilisez un switch case pour gérer les différents rôles
+	switch (dataRole) {
+		case "add":
+			const sourceElement = document.querySelector(`[data-role="add"][data-adresse="${dataAdresse}"]`);
+			if (sourceElement) {
+				sourceElement.remove();
+			}
+
+			// Appelez la fonction addElement avec l'adresse en paramètre
+			addElement(dataAdresse);
+			break;
+		case "remove":
+			const containerElement = document.querySelector(`[data-role="container"][data-adresse="${dataAdresse}"]`);
+			if (containerElement) {
+				containerElement.innerHTML = "";
+			}
+
+			// Vérifiez si l'adresse est de la forme "embeds.X" où X est un nombre
+			if (/^embeds.\d+$/.test(dataAdresse)) {
+				const match = dataAdresse.match(/^embeds.(\d+)$/);
+				if (match) {
+					const embedNumber = parseInt(match[1]);
+
+					const precAdd = document.querySelector(`[data-role="add"][data-adresse="embeds.${embedNumber - 1}"]`);
+					const nextAdd = document.querySelector(`[data-role="add"][data-adresse="embeds.${embedNumber + 1}"]`);
+
+					if (nextAdd) {
+						// Effacez le contenu du container embeds.(X + 1)
+						document.querySelector(`[data-role="container"][data-adresse="embeds.${embedNumber + 1}"]`).innerHTML = "";
+					}
+					if (precAdd) {
+						return;
+					}
+				}
+			}
+			// Vérifiez si l'adresse est de la forme "embeds.X.fields.Y" où X et Y sont des nombres
+			if (/^embeds.\d+.fields.\d+$/.test(dataAdresse)) {
+				const match = dataAdresse.match(/^embeds.(\d+).fields.(\d+)$/);
+				if (match) {
+					const embedNumber = match[1];
+					const fieldNumber = parseInt(match[2]);
+
+					if (fieldNumber < 24) {
+						// Vérifiez si le suivant contient un bouton d'ajout
+						const nextAddButton = document.querySelector(`[data-role="add"][data-adresse="embeds.${embedNumber}.fields.${fieldNumber + 1}"]`);
+						if (nextAddButton) {
+							document.querySelector(`[data-role="container"][data-adresse="embeds.${embedNumber}.fields.${fieldNumber + 1}"]`).innerHTML = "";
+						}
+					}
+					if (fieldNumber > 1) {
+						// Vérifiez si le précédent contient un bouton d'ajout
+						const precAddButton = document.querySelector(`[data-role="add"][data-adresse="embeds.${embedNumber}.fields.${fieldNumber - 1}"]`);
+						if (precAddButton) { return }
+					}
+				}
+			}
+
+			// Appelez la fonction initElement avec l'adresse en paramètre
+			initElement(dataAdresse);
+			break;
+		default:
+			// Rôle non supporté, quitter la fonction sans rien faire
+			return;
+	}
+}
+
+function updateFileInputs(forceActu = false) {
+	forceActu = forceActu === true
+	// Sélectionnez tous les éléments <input> de type "file"
+	const fileInputs = document.querySelectorAll('input[type="file"][data-adresse^="files."]');
+
+	// Initialisez deux listes pour les inputs vides et pleins
+	const emptyFileInputs = [];
+	const nonEmptyFileInputs = [];
+
+	// Parcourez tous les inputs de type "file" pour les classer
+	fileInputs.forEach((input) => {
+		if (input.files.length === 0) {
+			// Input vide, ajoutez-le à la liste des inputs vides
+			emptyFileInputs.push(input);
+		} else {
+			// Input avec des fichiers, ajoutez-le à la liste des inputs pleins
+			nonEmptyFileInputs.push(input);
+		}
+	});
+
+	// Parcourir la liste des inputs nonempty
+	nonEmptyFileInputs.forEach((input) => {
+		const adresse = input.getAttribute("data-adresse");
+
+		// Retrouver l'élément data-role = container data-adresse = adresse de l'input
+		const containerElement = document.querySelector(`[data-role="container"][data-adresse="${adresse}"]`);
+
+		// Regarder la valeur data-state de cet élément. Si c'est loaded, ne rien faire, sinon, mettre forceActu à true
+		const dataState = containerElement.getAttribute("data-state");
+		if (dataState !== "loaded") {
+			containerElement.setAttribute("data-state", "loaded");
+			forceActu = true;
+		}
+	});
+
+	// Actualiser les labels de tous les inputs
+	if (forceActu) {
+		nonEmptyFileInputs.forEach((input) => {
+			const adresse = input.getAttribute("data-adresse");
+
+			// Retrouver l'élément data-role = container data-adresse = adresse de l'input
+			const labelElement = document.querySelector(`[data-role="label"][data-adresse="${adresse}"]`);
+
+			// Récupérer le nom du fichier
+			const fileName = input.files[0].name;
+			const displayedFileName = fileName.length > 40 ? fileName.substring(0, 37) + "..." : fileName;
+
+			// Récupérer la taille du fichier en octets
+			const fileSize = input.files[0].size;
+
+			// Formater la taille du fichier en utilisant la fonction formatFileSize
+			const fileSizeStr = formatFileSize(fileSize);
+
+			// Mettre à jour l'innerText de labelElement avec le nom et la taille du fichier formatée
+			labelElement.innerText = displayedFileName + "\nTaille: " + fileSizeStr;
+			labelElement.setAttribute("title", fileName);
+		});
+	}
+
+	let nbHidden = 0
+	let nbEmpty = 0
+
+	// Mettre à jour l'état des inputs vides et container en conséquence
+	emptyFileInputs.forEach((input) => {
+		const adresse = input.getAttribute("data-adresse");
+
+		// Récupérer l'élément data-role = container data-adresse = adresse de l'input
+		const containerElement = document.querySelector(`[data-role="container"][data-adresse="${adresse}"]`);
+		const dataState = containerElement.getAttribute("data-state");
+
+		if(dataState == "loaded") {
+			forceActu = true
+		}
+		if(forceActu) {
+			containerElement.setAttribute("data-state", "hidden");
+		} else if(dataState == "empty") {
+			nbEmpty ++
+		} else {
+			nbHidden ++
+		}
+	});
+
+	if(!forceActu && nbEmpty === 1 || emptyFileInputs.length === 0) return
+
+	let isEmpty = true
+
+	emptyFileInputs.forEach((input) => {
+		const adresse = input.getAttribute("data-adresse");
+console.log(adresse)
+		// Récupérer l'élément data-role = container data-adresse = adresse de l'input
+		const containerElement = document.querySelector(`[data-role="container"][data-adresse="${adresse}"]`);
+		containerElement.setAttribute("data-state", isEmpty?"empty":"hidden");
+console.log(isEmpty?"empty":"hidden")
+		isEmpty = false
+	});
+}
+
+function collectDataToJson() {
+	const jsonData = {};
+	const interfaceElements = document.querySelectorAll('[data-role="input"],[data-role="select-source"]');
+
+	// Parcourir les éléments de l'interface
+	interfaceElements.forEach((element) => {
+		const dataRole = element.getAttribute('data-role');
+		const dataAdresse = element.getAttribute('data-adresse');
+
+		if(!dataAdresse) return;
+		const keys = dataAdresse.split('.');
+
+		// Ignorer les fichiers, ils sont traités par une autre fonction
+		if(keys[0] === "files") return;
+
+		let currentObject = jsonData;
+		keys.forEach((key, index) => {
+			if (index === keys.length - 1) {
+				// Dernière clef
+				if (dataRole === 'input') {
+					switch(element.type) {
+						case "checkbox":
+							currentObject[key] = element.checked
+							break
+						case "color":
+							currentObject[key] = parseInt(element.value.replace('#', ''), 16);
+							break
+						default:
+							currentObject[key] = element.value
+					}
+				} else {
+					// Gérez le cas des images
+					// Trouvez l'élément à lire en fonction de l'adresse et de l'état de la checkbox
+					const imageInputElement = document.querySelector(`[data-adresse="${dataAdresse}"][data-role="${element.checked ? 'input-file' : 'input-url'}"]`);
+
+					if (imageInputElement) {
+						if (element.checked) {
+							currentObject[key] = "attachment://file" + imageInputElement.value;
+						} else {
+							// Copiez la valeur de l'élément input-url
+							currentObject[key] = imageInputElement.value;
+						}
+					}
+				}
+			} else {
+				// Créez un objet JSON imbriqué si la clé n'existe pas
+				if (!currentObject[key]) {
+					currentObject[key] = ["embeds","fields"].includes(key)?[]:{};
+				}
+				currentObject = currentObject[key];
+			}
+		});
+	});
+
+	return jsonData;
+}
+
+// Fonction pour formater la taille du fichier
+function formatFileSize(bytes) {
+	if (bytes === 0) return "0 Bytes";
+
+	const k = 1024;
+	const sizes = ["octets", "Ko", "Mo", "Go", "To"];
+	const i = Math.floor(Math.log(bytes) / Math.log(k));
+
+	return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
+}
+
+function sendJsonToDiscordWebhook() {
+	// Récupération des valeurs du webhook URL, avatar et nom
+	const webhookUrl = document.getElementById('webhook_url').value;
+	const avatarUrl = document.getElementById('webhook_avatar').value;
+	const username = document.getElementById('webhook_name').value;
+
+	// Récupérez du message
+	const jsonData = collectDataToJson();
+
+	// Récupération des fichiers joints
+	const { formData, fileMapping } = collectFiles();
+
+	if (!webhookUrl) {
+		console.error('L\'URL du webhook Discord est manquante.');
+		return;
+	}
+
+	// Ajout des clefs username et avatar_url si nécessaire
+	if (username) jsonData.username = username;
+	if (avatarUrl) jsonData.avatar_url = avatarUrl;
+
+	// Ajoutez les données JSON au FormData
+	formData.append('payload_json', JSON.stringify(jsonData));
+
+	// Envoie de la requête POST multipart vers le webhook Discord
+	fetch(webhookUrl, {
+		method: 'POST',
+		body: formData,
+	})
+		.then((response) => {
+			if (response.ok) {
+				console.log('Message envoyé avec succès au webhook Discord.');
+			} else {
+				response.json().then((errorData) => {
+					console.error('Erreur lors de l\'envoi du message au webhook Discord :', errorData);
+				});
+			}
+		})
+		.catch((error) => {
+			console.error('Une erreur s\'est produite lors de l\'envoi du message :', error);
+		});
+}
+
+function collectFiles() {
+	const fileInputs = document.querySelectorAll('[data-role="input"][data-adresse^="files."]');
+	const formData = new FormData();
+	const fileMapping = {};
+
+	fileInputs.forEach((fileInput) => {
+		const dataAdresse = fileInput.getAttribute('data-adresse');
+		const keys = dataAdresse.split('.');
+
+		if (keys.length !== 2 || keys[0] !== 'files') {
+			console.error('Adresse de fichier joint invalide :', dataAdresse);
+			return;
+		}
+
+		const fileIndex = parseInt(keys[1]);
+
+		if (isNaN(fileIndex) || fileIndex < 0 || fileIndex > 9) {
+			console.error('Indice de fichier joint invalide :', keys[1]);
+			return;
+		}
+
+		const selectedFile = fileInput.files[0];
+
+		if (selectedFile) {
+			// Ajouter le fichier joint au FormData
+			formData.append(`file${fileIndex}`, selectedFile);
+			// Enregistrer la correspondance numéro de fichier => nom du fichier
+			fileMapping[fileIndex] = selectedFile.name;
+		}
+	});
+
+	return { formData, fileMapping };
+}
+
+
+	</script>
+</head>
+<body>
+
+	<header>
+		<!-- Logo et titre -->
+		<div class="logo">
+			<a href="/">
+				<img src="/assets/svg/logo_color.svg" alt="Logo AprylP">
+			</a>
+		</div>
+		<h1 class="site-title">Envoi de message sur un webhook Discord</h1>
+	</header>
+
+	<main>
+		<nav>
+			<!-- Zone de navigation -->
+			<ul class="navigation">
+				<li><a href="/">Accueil</a></li>
+				<li>Outils</li>
+				<li>Webhook Discord</li>
+			</ul>
+		</nav>
+		<noscript>
+			<section class="alert">
+				<h3>⚠️ JavaScript n'est pas activé ⚠️</h3>
+				<p>Cette page nécessite JavaScript pour fonctionner.<br/>Merci d'activer javascript pour cette page dans les paramètres de votre navigateur.</p>
+			</section>
+		</noscript>
+		<section class="alert">
+			<h3>Page en cours de développement</h3>
+			<p>Ce projet est encore en cours de développement, n'est pas complet, et peut présenter des comportement indésirables selon les données saisies. Les données ne sont pas validées avant d'être envoyées, et que le message soit bien ou mal envoyé il n'y a aucun retour dans l'interface.</p>
+		</section>
+		<section>
+			<h1>Webhook</h1>
+			<label>URL du webhook <input type="text" id="webhook_url" required value="https://discord.com/api/webhooks/1157693263885635604/Y_pWVojb8HO-DT5oHi65aDpV0fHpM6aKth094AkjTYnQB5PIO5lxGfOfogoSfaXqLtOl"></label>
+			<label>Nom du webhook <input type="text" id="webhook_name"></label>
+			<label>URL de l'image du webhook <input type="text" id="webhook_avatar"></label>
+
+			<h1>Message</h1>
+			<h2>Contenu</h2>
+			<div id="msg-content" data-role="container" data-adresse="content"></div>
+
+			<h2>Embeds</h2>
+			<div id="msg-embeds">
+				<div data-role="container" data-adresse="embeds.0"></div>
+				<div data-role="container" data-adresse="embeds.1"></div>
+				<div data-role="container" data-adresse="embeds.2"></div>
+				<div data-role="container" data-adresse="embeds.3"></div>
+				<div data-role="container" data-adresse="embeds.4"></div>
+				<div data-role="container" data-adresse="embeds.5"></div>
+				<div data-role="container" data-adresse="embeds.6"></div>
+				<div data-role="container" data-adresse="embeds.7"></div>
+				<div data-role="container" data-adresse="embeds.8"></div>
+				<div data-role="container" data-adresse="embeds.9"></div>
+			</div>
+
+			<h2>Fichiers</h2>
+			<div data-adresse="files" data-role="container"></div>
+
+			<div class="flex">
+				<a class="btn" onclick="" id="send_button">Envoyer</a>
+			</div>
+		</section>
+	</main>
+	<footer>
+		Créé par <i>TomAijerrie</i>
+	</footer>
+	<script>
+initElement("content")
+initElement("embeds.0")
+initElement("files")
+
+const sendButton = document.getElementById('send_button');
+sendButton.addEventListener('click', sendJsonToDiscordWebhook);
+	</script>
+</body></html>
+
+
+
+
+
+
+
