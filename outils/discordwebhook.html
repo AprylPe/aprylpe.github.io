@@ -842,7 +842,7 @@ function addElement(adresse) {
 		<div class="embed-footer" data-adresse="embeds.${embedNumber}.footer" data-role="container"></div>
 		<div data-adresse="embeds.${embedNumber}.timestamp" data-role="container" class="row"></div>
 	</div>
-</div>`;//<script>;
+</div>`;
 
 			// Bouton pour supprimer l'embed
 			const removeEmbedBtn = document.createElement("button");
@@ -924,7 +924,7 @@ function initElement(adresse) {
 						<button data-role="remove" data-adresse="files.${i}"><img src="../assets/svg/x.svg" alt="X" /></button>
 					`;
 
-					// Ajouter l'élément généré au container "files"// <script>
+					// Ajouter l'élément généré au container "files"
 					filesContainer.appendChild(fileElement);
 				}
 				const fileInputs = document.querySelectorAll('input[type="file"][data-adresse^="files."]');
@@ -1317,7 +1317,7 @@ function collectFiles() {
 		</section>
 		<section>
 			<h1>Webhook</h1>
-			<label>URL du webhook <input type="text" id="webhook_url" required value="https://discord.com/api/webhooks/1157693263885635604/Y_pWVojb8HO-DT5oHi65aDpV0fHpM6aKth094AkjTYnQB5PIO5lxGfOfogoSfaXqLtOl"></label>
+			<label>URL du webhook <input type="text" id="webhook_url" required></label>
 			<label>Nom du webhook <input type="text" id="webhook_name"></label>
 			<label>URL de l'image du webhook <input type="text" id="webhook_avatar"></label>
 
