@@ -1136,7 +1136,7 @@ console.log(isEmpty?"empty":"hidden")
 	});
 }
 
-function collectDataToJson() {
+function collectDataToJson(fileMapping = {}) {
 	const jsonData = {};
 	const interfaceElements = document.querySelectorAll('[data-role="input"],[data-role="select-source"]');
 
@@ -1145,26 +1145,26 @@ function collectDataToJson() {
 		const dataRole = element.getAttribute('data-role');
 		const dataAdresse = element.getAttribute('data-adresse');
 
-		if(!dataAdresse) return;
+		if (!dataAdresse) return;
 		const keys = dataAdresse.split('.');
 
 		// Ignorer les fichiers, ils sont traités par une autre fonction
-		if(keys[0] === "files") return;
+		if (keys[0] === "files") return;
 
 		let currentObject = jsonData;
 		keys.forEach((key, index) => {
 			if (index === keys.length - 1) {
 				// Dernière clef
 				if (dataRole === 'input') {
-					switch(element.type) {
+					switch (element.type) {
 						case "checkbox":
-							currentObject[key] = element.checked
-							break
+							currentObject[key] = element.checked;
+							break;
 						case "color":
 							currentObject[key] = parseInt(element.value.replace('#', ''), 16);
-							break
+							break;
 						default:
-							currentObject[key] = element.value
+							currentObject[key] = element.value;
 					}
 				} else {
 					// Gérez le cas des images
@@ -1173,7 +1173,10 @@ function collectDataToJson() {
 
 					if (imageInputElement) {
 						if (element.checked) {
-							currentObject[key] = "attachment://file" + imageInputElement.value;
+							// Utilisez le nom de fichier à partir de la correspondance
+							const fileNumber = imageInputElement.value;
+							const fileName = fileMapping[fileNumber*1 - 1] || `file${fileNumber}.png`;
+							currentObject[key] = "attachment://" + fileName;
 						} else {
 							// Copiez la valeur de l'élément input-url
 							currentObject[key] = imageInputElement.value;
@@ -1183,7 +1186,7 @@ function collectDataToJson() {
 			} else {
 				// Créez un objet JSON imbriqué si la clé n'existe pas
 				if (!currentObject[key]) {
-					currentObject[key] = ["embeds","fields"].includes(key)?[]:{};
+					currentObject[key] = ["embeds", "fields"].includes(key) ? [] : {};
 				}
 				currentObject = currentObject[key];
 			}
@@ -1192,6 +1195,7 @@ function collectDataToJson() {
 
 	return jsonData;
 }
+
 
 // Fonction pour formater la taille du fichier
 function formatFileSize(bytes) {
@@ -1210,11 +1214,11 @@ function sendJsonToDiscordWebhook() {
 	const avatarUrl = document.getElementById('webhook_avatar').value;
 	const username = document.getElementById('webhook_name').value;
 
-	// Récupérez du message
-	const jsonData = collectDataToJson();
-
 	// Récupération des fichiers joints
 	const { formData, fileMapping } = collectFiles();
+
+	// Récupérez du message
+	const jsonData = collectDataToJson(fileMapping);
 
 	if (!webhookUrl) {
 		console.error('L\'URL du webhook Discord est manquante.');
