@@ -35,6 +35,10 @@
 			display: block;
 			margin-bottom: 8px;
 		}
+		label.flex {
+			display: flex;
+			flex-direction: column;
+		}
 		div.flex {
 			display: flex;
 			align-items: stretch;
@@ -133,6 +137,7 @@
 			padding: 16px;
 			flex: 1;
 			border-radius: 12px;
+			flex-direction: column;
 		}
 		button[data-role=remove] img {
 			width: 10px;
@@ -147,6 +152,13 @@
 			height: 32px;
 			opacity: 0.5;
 		}
+		[data-role=add] p {
+			margin: 0px 0 4px 0;
+			font-size: 12px;
+		}
+		[data-role=add] p:before {
+			display: none;
+		}
 
 		input[type="color"] {
 			height: 100%;
@@ -159,7 +171,7 @@
 			overflow: hidden;
 		}
 
-		div.row {
+		div.row, label.row {
 			flex-direction: row !important;
 		}
 
@@ -168,6 +180,10 @@
 				color: #fff;
 				background-color: #232434;
 				border-color: #333;
+			}
+
+			button[data-role=add] {
+				color: #fff;
 			}
 
 			button[data-role=remove] img, [data-role=add] img, [data-state="loaded"] label>img {
@@ -213,17 +229,26 @@
 			padding: 2px;
 		}
 
+		img#avatar-preview {
+			width: 120px;
+			height: 120px;
+			max-width: 120px;
+			max-height: 120px;
+			border: solid 1px #888;
+			border-radius: 60px;
+			overflow: hidden;
+			align-self: center;
+			margin-right: 12px;
+		}
 	</style>
 	<script>
 function addElement(adresse) {
 	let contentContainer;
 	let containerId;
 
-	console.log(adresse)
 	if(adresse.match(/^embeds\.[0-9]\./ig)) {
 		// élément d'un embed
 		let element = adresse.match(/[^0-9]+/g)[1]
-		console.log(element)
 		switch(element) {
 			case ".color":
 				// Créer un input type color
@@ -842,7 +867,7 @@ function addElement(adresse) {
 		<div class="embed-footer" data-adresse="embeds.${embedNumber}.footer" data-role="container"></div>
 		<div data-adresse="embeds.${embedNumber}.timestamp" data-role="container" class="row"></div>
 	</div>
-</div>`;
+</div>`;//<script>
 
 			// Bouton pour supprimer l'embed
 			const removeEmbedBtn = document.createElement("button");
@@ -889,6 +914,7 @@ function initElement(adresse) {
 	switch(adresse) {
 		case "content":
 			addButton.setAttribute("title", "Ajouter du texte");
+			addButton.innerHTML = '<p>Contenu du message</p>';
 			break
 		case "embeds.0":
 		case "embeds.1":
@@ -901,6 +927,7 @@ function initElement(adresse) {
 		case "embeds.8":
 		case "embeds.9":
 			addButton.setAttribute("title", "Ajouter un embed");
+			addButton.innerHTML = '<p>Nouvel embed</p>';
 			break
 		case "files":
 			const filesContainer = document.querySelector('[data-adresse="files"]');
@@ -921,8 +948,7 @@ function initElement(adresse) {
 							<input type="file" data-role="input" data-adresse="files.${i}">
 							<span data-role="label" data-adresse="files.${i}"></span>
 						</label>
-						<button data-role="remove" data-adresse="files.${i}"><img src="../assets/svg/x.svg" alt="X" /></button>
-					`;
+						<button data-role="remove" data-adresse="files.${i}"><img src="../assets/svg/x.svg" alt="X" /></button>`;//<script>
 
 					// Ajouter l'élément généré au container "files"
 					filesContainer.appendChild(fileElement);
@@ -938,11 +964,72 @@ function initElement(adresse) {
 			}
 			break
 		default:
-			addButton.setAttribute("title", "Ajouter un élément");
+			if(adresse.match(/^embeds\.[0-9]\./ig)) {
+				// élément d'un embed
+				let element = adresse.match(/[^0-9]+/g)[1]
+				switch(element) {
+					case ".color":
+						addButton.setAttribute("title", "Choisir la couleur");
+						break
+					case ".author":
+						addButton.setAttribute("title", "Définir l'auteur");
+						addButton.innerHTML = '<p>Auteur</p>';
+						break
+					case ".author.url":
+						addButton.setAttribute("title", "Ajouter un lien pour l'auteur");
+						addButton.innerHTML = "<p>Site de l'auteur</p>";
+						break
+					case ".author.icon_url":
+						addButton.setAttribute("title", "Ajouter un avatar pour l'auteur");
+						addButton.innerHTML = "<p>Avatar de l'auteur</p>";
+						break
+					case ".title":
+						addButton.setAttribute("title", "Ajouter un titre");
+						addButton.innerHTML = '<p>Titre</p>';
+						break
+					case ".url":
+						addButton.setAttribute("title", "Ajouter un lien");
+						addButton.innerHTML = '<p>Lien</p>';
+						break
+					case ".description":
+						addButton.setAttribute("title", "Ajouter une description");
+						addButton.innerHTML = '<p>Description</p>';
+						break
+					case ".fields.":
+						addButton.setAttribute("title", "Ajouter un field");
+						addButton.innerHTML = '<p>Nouveau field</p>';
+						break
+					case ".thumbnail":
+						addButton.setAttribute("title", "Ajouter un thumbnail");
+						addButton.innerHTML = '<p>Thumbnail</p>';
+						break
+					case ".image":
+						addButton.setAttribute("title", "Ajouter une image");
+						addButton.innerHTML = '<p>Image</p>';
+						break
+					case ".footer":
+						addButton.setAttribute("title", "Ajouter un pied de page");
+						addButton.innerHTML = '<p>Pied de page</p>';
+						break
+					case ".footer.icon_url":
+						addButton.setAttribute("title", "Ajouter un icone");
+						addButton.innerHTML = '<p>Icone du pied de page</p>';
+						break
+					case ".timestamp":
+						addButton.setAttribute("title", "Ajouter une date");
+						addButton.innerHTML = '<p>Date</p>';
+						break
+					default:
+						console.log(element)
+						addButton.setAttribute("title", "Ajouter un élément");
+				}
+			} else {
+				addButton.setAttribute("title", "Ajouter un élément");
+			}
 	}
 
 	// Ajoutez une image SVG au bouton (remplacez "image.svg" par le chemin de votre image SVG)
-	addButton.innerHTML = '<img src="../assets/svg/plus.svg" alt="+">';
+	addButton.innerHTML += '<img src="../assets/svg/plus.svg" alt="+">';
 
 	// Écoutez l'événement click sur le bouton d'ajout
 	addButton.addEventListener("click", handleEvent);
@@ -968,7 +1055,7 @@ function handleAction(element) {
 	const dataAdresse = element.getAttribute("data-adresse");
 
 	// Si data-role ou data-adresse n'est pas défini, quittez la fonction sans bloquer la propagation
-	if (!dataRole || !dataAdresse) {
+	if (!dataRole || !dataAdresse & dataRole != "hide") {
 		handleAction(element.parentElement)
 		return
 	}
@@ -1032,6 +1119,10 @@ function handleAction(element) {
 
 			// Appelez la fonction initElement avec l'adresse en paramètre
 			initElement(dataAdresse);
+			break;
+		case "hide":
+			// Masquer l'élément avec le rôle "hide"
+			element.style.display = "none";
 			break;
 		default:
 			// Rôle non supporté, quitter la fonction sans rien faire
@@ -1127,11 +1218,9 @@ function updateFileInputs(forceActu = false) {
 
 	emptyFileInputs.forEach((input) => {
 		const adresse = input.getAttribute("data-adresse");
-console.log(adresse)
 		// Récupérer l'élément data-role = container data-adresse = adresse de l'input
 		const containerElement = document.querySelector(`[data-role="container"][data-adresse="${adresse}"]`);
 		containerElement.setAttribute("data-state", isEmpty?"empty":"hidden");
-console.log(isEmpty?"empty":"hidden")
 		isEmpty = false
 	});
 }
@@ -1285,6 +1374,61 @@ function collectFiles() {
 	return { formData, fileMapping };
 }
 
+function refreshWebhookInfo() {
+	const webhookUrlInput = document.getElementById('webhook_url');
+	const webhookUrl = webhookUrlInput.value.trim();
+
+	// Vérifier si l'URL est vide ou ne correspond pas au format attendu
+	if (!webhookUrl || !webhookUrl.match(/https:\/\/discord\.com\/api\/webhooks\/\d+\/[\w-]+/)) {
+		showMessage("error.webhook.badformat")
+		console.error('URL du webhook Discord invalide.');
+		return;
+	}
+
+	let status = 0;
+	fetch(webhookUrl)
+		.then((response) => {
+			status = response.status;
+			switch (response.status) {
+				case 200:
+					return response.json();
+				case 401:
+				case 404:
+					return response.json().then((errorData) => {
+						showMessage(`error.webhook.${status}`);
+						console.error(`Erreur ${status} lors de la récupération des informations du webhook : ${errorData.message}`);
+					});
+				default:
+					showMessage('error.webhook.connect');
+					console.error(`Une erreur s'est produite lors de la récupération des informations du webhook : ${response.statusText}`);
+					break;
+			}
+		})
+		.then((webhookData) => {
+			if (status === 200) {
+				const webhookNameInput = document.getElementById('webhook_name');
+				const webhookAvatarInput = document.getElementById('webhook_avatar');
+
+				webhookNameInput.placeholder = webhookData.name;
+
+				const avatarUrl = webhookData.avatar ? `https://cdn.discordapp.com/avatars/${webhookData.id}/${webhookData.avatar}.png` : 'https://cdn.discordapp.com/embed/avatars/3.png';
+				webhookAvatarInput.placeholder = avatarUrl;
+
+				// Mettre à jour l'image
+				const avatarPreview = document.getElementById('avatar-preview');
+				avatarPreview.src = webhookAvatarInput.value || avatarUrl;
+			}
+		})
+		.catch((error) => {
+			console.error('Une erreur s\'est produite lors de la récupération des informations du webhook :', error);
+			showMessage('error.webhook.connect');
+		});
+}
+
+function showMessage(messageName) {
+	const msg = document.querySelector(`[data-msg="${messageName}"]`);
+	if (msg) msg.style.display = 'block';
+}
 
 	</script>
 </head>
@@ -1321,9 +1465,36 @@ function collectFiles() {
 		</section>
 		<section>
 			<h1>Webhook</h1>
-			<label>URL du webhook <input type="text" id="webhook_url" required></label>
-			<label>Nom du webhook <input type="text" id="webhook_name"></label>
-			<label>URL de l'image du webhook <input type="text" id="webhook_avatar"></label>
+			<div class="alert" data-role="hide" data-msg="error.webhook.badformat" style="display: none">
+				<h3>Format de l'URL invalide</h3>
+				<p>L'URL saisie n'a pas un format valide.</p>
+				<p>Cliquez pour masquer ce message.</p>
+			</div>
+			<div class="alert" data-role="hide" data-msg="error.webhook.badtoken" style="display: none">
+				<h3>Accès refusé: Token incorrect</h3>
+				<p>Le Token saisi est invalide.</p>
+				<p>Cliquez pour masquer ce message.</p>
+			</div>
+			<div class="alert" data-role="hide" data-msg="error.webhook.unknownwebhook" style="display: none">
+				<h3>Webhook inconnu</h3>
+				<p>L'URL saisie ne pointe vers aucun webhook valide. Le webhook a peut-être été supprimé.</p>
+				<p>Cliquez pour masquer ce message.</p>
+			</div>
+			<div class="alert" data-role="hide" data-msg="error.webhook.connect" style="display: none">
+				<h3>Réponse incorrecte</h3>
+				<p>La connexion à l'API de discord a échoué.</p>
+				<p>Cliquez pour masquer ce message.</p>
+			</div>
+			<label class="flex">URL du webhook <input type="text" id="webhook_url" required placeholder="https://discord.com/api/webhooks/1234567890123456789/TOKEN-abcdefghijklmnopqrstuvwxz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"></label>
+
+			<div class="flex">
+				<img id="avatar-preview"></img>
+				<div class="row">
+					<label class="flex">Nom du webhook <input type="text" id="webhook_name"></label>
+					<label class="flex">URL de l'avatar <input type="text" id="webhook_avatar" placeholder="https://example.com/avatar.png"></label>
+					<a class="btn" id="refreshAvatar">Actualiser</a>
+				</div>
+			</div>
 
 			<h1>Message</h1>
 			<h2>Contenu</h2>
@@ -1347,12 +1518,18 @@ function collectFiles() {
 			<div data-adresse="files" data-role="container"></div>
 
 			<div class="flex">
-				<a class="btn" onclick="" id="send_button">Envoyer</a>
+				<a class="btn" id="send_button">Envoyer</a>
 			</div>
 		</section>
 	</main>
 	<footer>
-		Créé par <i>TomAijerrie</i>
+		<div class="footer-column">
+			<!-- Mentions légales -->
+		</div>
+		<div class="footer-column">
+			<!-- Signature et réseaux sociaux -->
+			<p>Créé par AprylP</p>
+		</div>
 	</footer>
 	<script>
 initElement("content")
@@ -1361,6 +1538,11 @@ initElement("files")
 
 const sendButton = document.getElementById('send_button');
 sendButton.addEventListener('click', sendJsonToDiscordWebhook);
+
+const refreshAvatarBtn = document.getElementById('refreshAvatar');
+refreshAvatarBtn.addEventListener('click', refreshWebhookInfo);
+
+document.querySelectorAll('[data-msg]').forEach((element) => {element.addEventListener('click', handleEvent)})
 	</script>
 </body></html>
 
