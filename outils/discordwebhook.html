@@ -1303,16 +1303,17 @@ function sendJsonToDiscordWebhook() {
 	const avatarUrl = document.getElementById('webhook_avatar').value;
 	const username = document.getElementById('webhook_name').value;
 
-	// Récupération des fichiers joints
-	const { formData, fileMapping } = collectFiles();
-
-	// Récupérez du message
-	const jsonData = collectDataToJson(fileMapping);
-
 	if (!webhookUrl) {
 		console.error('L\'URL du webhook Discord est manquante.');
 		return;
 	}
+
+	// Récupération des fichiers joints
+	const { formData, fileMapping } = collectFiles();
+
+	// Récupérez du message
+	const jsonData = cleanJSON(collectDataToJson(fileMapping));
+
 
 	// Ajout des clefs username et avatar_url si nécessaire
 	if (username) jsonData.username = username;
@@ -1430,6 +1431,269 @@ function showMessage(messageName) {
 	if (msg) msg.style.display = 'block';
 }
 
+function checkMessage(data, fileMapping) {
+	if (data.content) {
+		// Vérification de la longueur du contenu
+		const contentLength = data.content.trim().length;
+
+		if (contentLength === 0) {
+			// Avertissement : champ présent mais vide
+			console.warn('Le contenu du message est vide.');
+		} else if (contentLength > 2000) {
+			// Erreur : contenu trop long
+			console.error('Le contenu du message dépasse la limite de 2000 caractères.');
+		}
+	}
+
+	// Test 2 : Nombre d'embeds autorisés
+	if (data.embeds && data.embeds.length > 10) {
+		// Erreur : trop d'embeds
+		console.error('Le message contient trop d\'embeds. La limite est de 10 embeds.');
+	}
+
+	// Test 3 : Absence d'embeds vides
+	if (data.embeds && data.embeds.length > 0) {
+		data.embeds.forEach((embed, index) => {
+			const embedKeys = Object.keys(embed);
+			if (embedKeys.length === 0) {
+				// Avertissement : embed vide
+				console.warn(`L'embed n°${index + 1} est vide.`);
+			} else {
+				// Tests spécifiques aux embeds
+
+				// Test 4 : Vérification de la propriété "title" dans les embeds non vides
+				if ('title' in embed) {
+					const title = embed.title.trim();
+					if (title.length === 0) {
+						// Erreur : "title" est vide
+						console.error(`L'embed n°${index + 1} a un "title" vide.`);
+					} else if (title.length > 256) {
+						// Erreur : "title" trop long
+						console.error(`L'embed n°${index + 1} a un "title" dépassant la limite de 256 caractères.`);
+					} else if (title.includes('\n')) {
+						// Erreur : "title" contient un retour à la ligne
+						console.error(`L'embed n°${index + 1} a un "title" contenant un retour à la ligne.`);
+					}
+				}
+				// Test 5 : Vérification de la propriété "description" dans les embeds non vides
+				if ('description' in embed) {
+					const description = embed.description.trim();
+					if (description.length === 0) {
+						// Erreur : "description" est vide
+						console.error(`L'embed n°${index + 1} a une "description" vide.`);
+					} else if (description.length > 4096) {
+						// Erreur : "description" trop longue
+						console.error(`L'embed n°${index + 1} a une "description" dépassant la limite de 4096 caractères.`);
+					}
+				}
+				// Test 6 : Vérification de la propriété "url" dans les embeds non vides
+				if ('url' in embed) {
+					const url = embed.url.trim();
+					if (!embed.title) {
+						// Erreur : "url" est définie sans "title"
+						console.error(`L'embed n°${index + 1} a une "url" définie sans "title".`);
+					} else if (!url.startsWith("https://")) {
+						// Erreur : "url" ne commence pas par "https://"
+						console.error(`L'embed n°${index + 1} a une "url" qui ne commence pas par "https://".`);
+					}
+				}
+				// Test 7 : Vérification de la propriété "timestamp" dans les embeds non vides
+				if ('timestamp' in embed) {
+					const timestamp = embed.timestamp.trim();
+					if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z$/.test(timestamp)) {
+						// Erreur : "timestamp" n'est pas au format ISO8601 timestamp
+						console.error(`L'embed n°${index + 1} a un "timestamp" qui n'est pas au format ISO8601 timestamp.`);
+					}
+				}
+				// Test 8 : Vérification de la propriété "color" dans les embeds non vides
+				if ('color' in embed) {
+					const color = embed.color;
+					if (!Number.isInteger(color) || color < 0 || color > 16777215) {
+						// Erreur : "color" n'est pas un entier sur 24 bits non signés
+						console.error(`L'embed n°${index + 1} a une "color" invalide.`);
+					}
+				}
+				// Test 9 : Vérification de la propriété "footer" dans les embeds non vides
+				if ('footer' in embed) {
+					if (!embed.footer.text) {
+						// Erreur : "footer.text" est vide
+						console.error(`L'embed n°${index + 1} a un "footer.text" vide.`);
+					} else if (embed.footer.text.includes('\n')) {
+						// Erreur : "footer.text" contient un retour à la ligne
+						console.error(`L'embed n°${index + 1} a un "footer.text" contenant un retour à la ligne.`);
+					}
+
+					// Test de la propriété "footer.icon_url"
+					if('icon_url' in embed.footer) {
+						const iconUrlTestResult = validateIconUrl(embed.footer.icon_url, fileMapping);
+						if (!iconUrlTestResult.passed) {
+							// Erreur : "footer.icon_url" ne passe pas le test
+							console.error(`L'embed n°${index + 1} a une "footer.icon_url" invalide: ${iconUrlTestResult.error}`);
+						}
+					}
+				}
+				// Test 10 : Vérification de la propriété "image" dans les embeds non vides
+				if ('image' in embed) {
+					if (!('url' in embed.image)) {
+						// Erreur : "image.url" n'est pas défini
+						console.error(`L'embed n°${index + 1} a une propriété "image" mais "image.url" n'est pas défini.`);
+					} else {
+						// Vérification de "image.url" avec le test validateIconUrl
+						const imageUrlTestResult = validateIconUrl(embed.image.url, fileMapping);
+						if (!imageUrlTestResult.passed) {
+							// Erreur : "image.url" ne passe pas le test
+							console.error(`L'embed n°${index + 1} a une "image.url" invalide: ${imageUrlTestResult.error}`);
+						}
+					}
+				}
+				// Test 11 : Vérification de la propriété "thumbnail" dans les embeds non vides
+				if ('thumbnail' in embed) {
+					if (!('url' in embed.thumbnail)) {
+						// Erreur : "thumbnail.url" n'est pas défini
+						console.error(`L'embed n°${index + 1} a une propriété "thumbnail" mais "thumbnail.url" n'est pas défini.`);
+					} else {
+						// Vérification de "thumbnail.url" avec le test validateIconUrl
+						const thumbnailUrlTestResult = validateIconUrl(embed.thumbnail.url, fileMapping);
+						if (!thumbnailUrlTestResult.passed) {
+							// Erreur : "thumbnail.url" ne passe pas le test
+							console.error(`L'embed n°${index + 1} a une "thumbnail.url" invalide: ${thumbnailUrlTestResult.error}`);
+						}
+					}
+				}
+				// Test 12 : Vérification de la propriété "author" dans les embeds non vides
+				if ('author' in embed) {
+					const author = embed.author;
+
+					// Vérification de "author.name"
+					if ('name' in author) {
+						const authorName = author.name.trim();
+						if (authorName.length === 0) {
+							// Erreur : "author.name" est vide
+							console.error(`L'embed n°${index + 1} a un "author.name" vide.`);
+						} else if (authorName.length > 256) {
+							// Erreur : "author.name" trop long
+							console.error(`L'embed n°${index + 1} a un "author.name" dépassant la limite de 256 caractères.`);
+						} else if (authorName.includes('\n')) {
+							// Erreur : "author.name" contient un retour à la ligne
+							console.error(`L'embed n°${index + 1} a un "author.name" contenant un retour à la ligne.`);
+						}
+					}
+
+					// Vérification de "author.url"
+					if ('url' in author) {
+						if (!author.url.startsWith('https://')) {
+							// Erreur : "author.url" ne commence pas par "https://"
+							console.error(`L'embed n°${index + 1} a un "author.url" invalide.`);
+						}
+					}
+
+					// Test de la propriété "author.icon_url"
+					if ('icon_url' in author) {
+						const authorIconUrlTestResult = validateIconUrl(author.icon_url, fileMapping);
+						if (!authorIconUrlTestResult.passed) {
+							// Erreur : "author.icon_url" ne passe pas le test
+							console.error(`L'embed n°${index + 1} a une "author.icon_url" invalide: ${authorIconUrlTestResult.error}`);
+						}
+					}
+				}
+
+				// Test 13 : Vérification de la propriété "fields" dans les embeds non vides
+				if ('fields' in embed) {
+					const fields = embed.fields;
+					if (fields.length === 0) {
+						// Erreur : "fields" est vide
+						console.error(`L'embed n°${index + 1} a des "fields" vides.`);
+					} else {
+						// Test 14 : validation de chaque field
+						fields.forEach((field, fieldIndex) => {
+							// Vérification de "field.name"
+							if (!('name' in field)) {
+								// Erreur : "field.name" manquant
+								console.error(`L'embed n°${index + 1}, "field" n°${fieldIndex + 1} a un "field.name" manquant.`);
+							} else {
+								const fieldName = field.name.trim();
+								if (fieldName.length === 0) {
+									// Erreur : "field.name" est vide
+									console.error(`L'embed n°${index + 1}, "field" n°${fieldIndex + 1} a un "field.name" vide.`);
+								} else if (fieldName.length > 256) {
+									// Erreur : "field.name" trop long
+									console.error(`L'embed n°${index + 1}, "field" n°${fieldIndex + 1} a un "field.name" dépassant la limite de 256 caractères.`);
+								} else if (fieldName.includes('\n')) {
+									// Erreur : "field.name" contient un retour à la ligne
+									console.error(`L'embed n°${index + 1}, "field" n°${fieldIndex + 1} a un "field.name" contenant un retour à la ligne.`);
+								}
+							}
+
+							// Vérification de "field.value"
+							if (!('value' in field)) {
+								// Erreur : "field.value" manquant
+								console.error(`L'embed n°${index + 1}, "field" n°${fieldIndex + 1} a un "field.value" manquant.`);
+							} else {
+								const fieldValue = field.value.trim();
+								if (fieldValue.length > 1024) {
+									// Erreur : "field.value" trop long
+									console.error(`L'embed n°${index + 1}, "field" n°${fieldIndex + 1} a un "field.value" dépassant la limite de 1024 caractères.`);
+								}
+							}
+
+							// Vérification de "field.inline" (optionnel)
+							if ('inline' in field && typeof field.inline !== 'boolean') {
+								// Erreur : "field.inline" n'est pas un booléen
+								console.error(`L'embed n°${index + 1}, "field" n°${fieldIndex + 1} a un "field.inline" invalide.`);
+							}
+						});
+					}
+				}
+
+			}
+		});
+	}
+}
+
+function validateIconUrl(iconUrl, fileMapping) {
+	// Vérification si l'URL est définie
+	if (!iconUrl) {
+		return { passed: false, error: 'L\'URL n\'est pas définie.' };
+	}
+
+	// Si l'URL commence par "attachment://"
+	if (iconUrl.startsWith('attachment://')) {
+		const fileName = iconUrl.replace('attachment://', ''); // Récupération du nom du fichier
+		if (!Object.values(fileMapping).includes(fileName)) {
+			return { passed: false, error: 'L\'URL fait référence à un fichier non défini.' };
+		}
+	}
+
+	// Si l'URL commence par "https://"
+	if (iconUrl.startsWith('https://')) {
+		// Utilisation d'une regex pour vérifier le format de l'URL
+		const urlRegex = /^https:\/\/([a-z0-9.-]+\.[a-z]{2,})/i;
+		if (!urlRegex.test(iconUrl)) {
+			return { passed: false, error: 'L\'URL ne correspond pas à un format valide.' };
+		}
+		return { passed: true };
+	}
+
+	return { passed: false, error: 'L\'URL doit commencer par "https://".' };
+}
+
+function cleanJSON(jsonData) {
+	if (typeof jsonData === 'string') {
+		return jsonData.split('\n').map(line => line.trimEnd()).join('\n').trimStart();
+	} else if (Array.isArray(jsonData)) {
+		return jsonData.map(item => cleanJSON(item));
+	} else if (typeof jsonData === 'object') {
+		const cleanedData = {};
+		for (const key in jsonData) {
+			if (jsonData.hasOwnProperty(key)) {
+				cleanedData[key] = cleanJSON(jsonData[key]);
+			}
+		}
+		return cleanedData;
+	} else {
+		return jsonData;
+	}
+}
 	</script>
 </head>
 <body>
@@ -1438,7 +1702,7 @@ function showMessage(messageName) {
 		<!-- Logo et titre -->
 		<div class="logo">
 			<a href="/">
-				<img src="/assets/svg/logo_color.svg" alt="Logo AprylP">
+				<img src="/assets/svg/logo_color.svg" alt="Logo AprylP" width="64" height="64">
 			</a>
 		</div>
 		<h1 class="site-title">Envoi de message sur un webhook Discord</h1>
@@ -1455,40 +1719,40 @@ function showMessage(messageName) {
 		</nav>
 		<noscript>
 			<section class="alert">
-				<h3>⚠️ JavaScript n'est pas activé ⚠️</h3>
+				<h1>⚠️ JavaScript n'est pas activé ⚠️</h1>
 				<p>Cette page nécessite JavaScript pour fonctionner.<br/>Merci d'activer javascript pour cette page dans les paramètres de votre navigateur.</p>
 			</section>
 		</noscript>
 		<section class="alert">
-			<h3>Page en cours de développement</h3>
+			<h1>Page en cours de développement</h1>
 			<p>Ce projet est encore en cours de développement, n'est pas complet, et peut présenter des comportement indésirables selon les données saisies. Les données ne sont pas validées avant d'être envoyées, et que le message soit bien ou mal envoyé il n'y a aucun retour dans l'interface.</p>
 		</section>
 		<section>
 			<h1>Webhook</h1>
 			<div class="alert" data-role="hide" data-msg="error.webhook.badformat" style="display: none">
-				<h3>Format de l'URL invalide</h3>
+				<h2>Format de l'URL invalide</h2>
 				<p>L'URL saisie n'a pas un format valide.</p>
 				<p>Cliquez pour masquer ce message.</p>
 			</div>
 			<div class="alert" data-role="hide" data-msg="error.webhook.badtoken" style="display: none">
-				<h3>Accès refusé: Token incorrect</h3>
+				<h2>Accès refusé: Token incorrect</h2>
 				<p>Le Token saisi est invalide.</p>
 				<p>Cliquez pour masquer ce message.</p>
 			</div>
 			<div class="alert" data-role="hide" data-msg="error.webhook.unknownwebhook" style="display: none">
-				<h3>Webhook inconnu</h3>
+				<h2>Webhook inconnu</h2>
 				<p>L'URL saisie ne pointe vers aucun webhook valide. Le webhook a peut-être été supprimé.</p>
 				<p>Cliquez pour masquer ce message.</p>
 			</div>
 			<div class="alert" data-role="hide" data-msg="error.webhook.connect" style="display: none">
-				<h3>Réponse incorrecte</h3>
+				<h2>Réponse incorrecte</h2>
 				<p>La connexion à l'API de discord a échoué.</p>
 				<p>Cliquez pour masquer ce message.</p>
 			</div>
 			<label class="flex">URL du webhook <input type="text" id="webhook_url" required placeholder="https://discord.com/api/webhooks/1234567890123456789/TOKEN-abcdefghijklmnopqrstuvwxz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"></label>
 
 			<div class="flex">
-				<img id="avatar-preview"></img>
+				<img id="avatar-preview" alt="Avatar du webhook"></img>
 				<div class="row">
 					<label class="flex">Nom du webhook <input type="text" id="webhook_name"></label>
 					<label class="flex">URL de l'avatar <input type="text" id="webhook_avatar" placeholder="https://example.com/avatar.png"></label>
