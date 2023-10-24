@@ -4,23 +4,38 @@
 		a {
 			padding: 8px;
 			border-radius: 8px;
+			display: inline-flex;
+			align-items: center;
+			text-decoration: none;
+			color: #fff;
+			font-weight: bold;
 		}
 		a:hover {
-			background-color: #ad000;
+			background-color: #890000;
 		}
-		a:hover img:after {
+		a:hover:after {
 			content: "La boutique du rat";
+			margin-left: 8px;
+			display: inline-block;
 		}
 		img {
 			width: 64px;
 			height: 64px;
+		}
+
+		#position {
+			position: fixed;
+			top: 50%;
+			left: 0px;
 		}
 	</style>
 	<title>Hello World!</title>
 	<script src="https://extension-files.twitch.tv/helper/v1/twitch-ext.min.js"></script>
 </head>
 <body>
-	<a href="">
-		<img src="./logo.png"/>
-	</a>
+	<div id="position">
+		<a href="https://www.laboutiquedurat.com/" target="_blank">
+			<img src="./logo.png"/>
+		</a>
+	</div>
 </body>
