@@ -1303,8 +1303,20 @@ function sendJsonToDiscordWebhook() {
 	const avatarUrl = document.getElementById('webhook_avatar').value;
 	const username = document.getElementById('webhook_name').value;
 
-	if (!webhookUrl) {
-		console.error('L\'URL du webhook Discord est manquante.');
+	// Masquer tous les messages
+	document.querySelectorAll('[data-role="hide"]').forEach(h => {h.style.display = "none"})
+
+	// Vérifier si l'URL est vide ou ne correspond pas au format attendu
+	if (!webhookUrl || !webhookUrl.match(/https:\/\/discord\.com\/api\/webhooks\/\d+\/[\w-]+/)) {
+		showMessage("error.webhook.badformat")
+		console.error('URL du webhook Discord invalide.');
+		return;
+	}
+
+	if(username && username.length > 80) {
+		// Username trop long
+		showMessage("error.webhook.toolongusername")
+		console.error('Nom du webhook trop long.');
 		return;
 	}
 
@@ -1313,7 +1325,6 @@ function sendJsonToDiscordWebhook() {
 
 	// Récupérez du message
 	const jsonData = cleanJSON(collectDataToJson(fileMapping));
-
 
 	// Valider les données du message en utilisant la fonction checkMessage
 	const validation = checkMessage(jsonData, fileMapping);
@@ -1324,8 +1335,11 @@ function sendJsonToDiscordWebhook() {
 	const warnFilesContainer = document.querySelector('[data-msg="warn.validation.files"]');
 
 	errorContainer.style.display = 'none'; // Cacher les messages précédents
+	errorContainer.textContent = ''; // Vider les messages précédents
 	warnResultContainer.style.display = 'none';
+	warnResultContainer.textContent = '';
 	warnFilesContainer.style.display = 'none';
+	warnFilesContainer.textContent = '';
 
 	// Si la validation échoue, afficher les erreurs et avertissements
 	if (!validation.passed) {
@@ -1349,7 +1363,6 @@ function sendJsonToDiscordWebhook() {
 		});
 	}
 	if(!validation.passed) return
-	return
 
 	// Ajout des clefs username et avatar_url si nécessaire
 	if (username) jsonData.username = username;
@@ -1366,14 +1379,28 @@ function sendJsonToDiscordWebhook() {
 		.then((response) => {
 			if (response.ok) {
 				console.log('Message envoyé avec succès au webhook Discord.');
+				showMessage("sucess.message.sent")
 			} else {
 				response.json().then((errorData) => {
+					console.log(response)
 					console.error('Erreur lors de l\'envoi du message au webhook Discord :', errorData);
+					switch(response.status) {
+						case 401:
+							showMessage("error.webhook.badtoken")
+							return
+						case 404:
+							showMessage("error.webhook.unknownwebhook")
+							return
+						default:
+							showMessage("error.discord.generic")
+							return
+					}
 				});
 			}
 		})
 		.catch((error) => {
 			console.error('Une erreur s\'est produite lors de l\'envoi du message :', error);
+			showMessage("error.connection.generic")
 		});
 }
 
@@ -1414,11 +1441,21 @@ function collectFiles() {
 function refreshWebhookInfo() {
 	const webhookUrlInput = document.getElementById('webhook_url');
 	const webhookUrl = webhookUrlInput.value.trim();
+	const username = document.getElementById('webhook_name').value;
+
+	document.querySelectorAll('[data-role="hide"]').forEach(h => {h.style.display = "none"})
 
 	// Vérifier si l'URL est vide ou ne correspond pas au format attendu
 	if (!webhookUrl || !webhookUrl.match(/https:\/\/discord\.com\/api\/webhooks\/\d+\/[\w-]+/)) {
 		showMessage("error.webhook.badformat")
 		console.error('URL du webhook Discord invalide.');
+		return;
+	}
+
+	if(username && username.length > 80) {
+		// Username trop long
+		showMessage("error.webhook.toolongusername")
+		console.error('Nom du webhook trop long.');
 		return;
 	}
 
@@ -1475,8 +1512,13 @@ function checkMessage(data, fileMapping) {
 		fwarns: []
 	};
 
+	// Test 0 : Vérification qu'au moins une valeur est définie
+	if (!data.content && (!data.embeds || data.embeds.length === 0) && Object.keys(fileMapping).length === 0) {
+		result.errors.push('Le message n\'a ni contenu, ni embed, ni fichier.');
+	}
+
+	// Test 1 : Vérification de la longueur du contenu
 	if (data.content) {
-		// Vérification de la longueur du contenu
 		const contentLength = data.content.trim().length;
 
 		if (contentLength === 0) {
@@ -1782,15 +1824,16 @@ function cleanJSON(jsonData) {
 				<p>Cette page nécessite JavaScript pour fonctionner.<br/>Merci d'activer javascript pour cette page dans les paramètres de votre navigateur.</p>
 			</section>
 		</noscript>
-		<section class="alert">
-			<h1>Page en cours de développement</h1>
-			<p>Ce projet est encore en cours de développement, n'est pas complet, et peut présenter des comportement indésirables selon les données saisies. Les données ne sont pas validées avant d'être envoyées, et que le message soit bien ou mal envoyé il n'y a aucun retour dans l'interface.</p>
-		</section>
 		<section>
 			<h1>Webhook</h1>
 			<div class="alert" data-role="hide" data-msg="error.webhook.badformat" style="display: none">
 				<h2>Format de l'URL invalide</h2>
 				<p>L'URL saisie n'a pas un format valide.</p>
+				<p>Cliquez pour masquer ce message.</p>
+			</div>
+			<div class="alert" data-role="hide" data-msg="error.webhook.toolongusername" style="display: none">
+				<h2>Format du nom du webbhook invalide</h2>
+				<p>Le nom du webhook est trop long. (80 caractères maximum)</p>
 				<p>Cliquez pour masquer ce message.</p>
 			</div>
 			<div class="alert" data-role="hide" data-msg="error.webhook.badtoken" style="display: none">
@@ -1842,6 +1885,19 @@ function cleanJSON(jsonData) {
 			<div data-adresse="files" data-role="container"></div>
 			<div class="warn" data-role="hide" data-msg="warn.validation.files" style="display: none"></div>
 
+			<div class="info" data-role="hide" data-msg="sucess.message.sent" style="display: none">
+				<h2>Le message a été envoyé</h2>
+				<p>Cliquez pour masquer ce message.</p>
+			</div>
+			<div class="alert" data-role="hide" data-msg="error.discord.generic" style="display: none">
+				<h2>Echec: Le message n'a pu être envoyé</h2>
+				<p>Cliquez pour masquer ce message.</p>
+			</div>
+			<div class="alert" data-role="hide" data-msg="error.connection.generic" style="display: none">
+				<h2>Echec: La requête n'a pas abouti</h2>
+				<p>Vérifiez votre connexion internet.</p>
+				<p>Cliquez pour masquer ce message.</p>
+			</div>
 			<div class="flex">
 				<a class="btn" id="send_button">Envoyer</a>
 			</div>
