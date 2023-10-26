@@ -4,7 +4,7 @@
 	<title>Envoi de message sur un webhook Discord</title>
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<link rel="stylesheet" href="../assets/css/style.css">
+	<link rel="stylesheet" href="assets/css/style.css">
 	<style>
 		body {
 			text-align: justify;
@@ -262,7 +262,7 @@ function addElement(adresse) {
 				removeColorBtn.setAttribute("data-adresse", adresse);
 				removeColorBtn.setAttribute("data-role", "remove");
 				removeColorBtn.setAttribute("title", "Retirer la couleur");
-				removeColorBtn.innerHTML = '<img src="../assets/svg/x.svg" alt="X">';
+				removeColorBtn.innerHTML = '<img src="assets/svg/x.svg" alt="X">';
 
 				// Écouter les événements click des éléments créés
 				removeColorBtn.addEventListener("click", handleEvent);
@@ -286,7 +286,7 @@ function addElement(adresse) {
 				removeDescBtn.setAttribute("data-adresse", adresse);
 				removeDescBtn.setAttribute("data-role", "remove");
 				removeDescBtn.setAttribute("title", "Retirer la description");
-				removeDescBtn.innerHTML = '<img src="../assets/svg/x.svg" alt="X">';
+				removeDescBtn.innerHTML = '<img src="assets/svg/x.svg" alt="X">';
 
 				// Écouter les événements click des éléments créés
 				removeDescBtn.addEventListener("click", handleEvent);
@@ -311,7 +311,7 @@ function addElement(adresse) {
 				removeTitleBtn.setAttribute("data-adresse", adresse);
 				removeTitleBtn.setAttribute("data-role", "remove");
 				removeTitleBtn.setAttribute("title", "Retirer le titre");
-				removeTitleBtn.innerHTML = '<img src="../assets/svg/x.svg" alt="X">';
+				removeTitleBtn.innerHTML = '<img src="assets/svg/x.svg" alt="X">';
 
 				const titleRow = document.createElement("div");
 				titleRow.className = "row";
@@ -350,7 +350,7 @@ function addElement(adresse) {
 				removeUrlBtn.setAttribute("data-adresse", adresse);
 				removeUrlBtn.setAttribute("data-role", "remove");
 				removeUrlBtn.setAttribute("title", "Retirer le lien");
-				removeUrlBtn.innerHTML = '<img src="../assets/svg/x.svg" alt="X">';
+				removeUrlBtn.innerHTML = '<img src="assets/svg/x.svg" alt="X">';
 
 				// Écouter les événements click des éléments créés
 				removeUrlBtn.addEventListener("click", handleEvent);
@@ -375,7 +375,7 @@ function addElement(adresse) {
 				removeTimestampBtn.setAttribute("data-adresse", adresse);
 				removeTimestampBtn.setAttribute("data-role", "remove");
 				removeTimestampBtn.setAttribute("title", "Retirer le timestamp");
-				removeTimestampBtn.innerHTML = '<img src="../assets/svg/x.svg" alt="X">';
+				removeTimestampBtn.innerHTML = '<img src="assets/svg/x.svg" alt="X">';
 
 				// Écouter les événements click des éléments créés
 				removeTimestampBtn.addEventListener("click", handleEvent);
@@ -405,7 +405,7 @@ function addElement(adresse) {
 				removeAuthorBtn.setAttribute("data-adresse", adresse);
 				removeAuthorBtn.setAttribute("data-role", "remove");
 				removeAuthorBtn.setAttribute("title", "Retirer l'auteur");
-				removeAuthorBtn.innerHTML = '<img src="../assets/svg/x.svg" alt="X">';
+				removeAuthorBtn.innerHTML = '<img src="assets/svg/x.svg" alt="X">';
 
 				// Créer un div pour l'input author.name et le bouton de suppression (dans une "row")
 				const authorRow = document.createElement("div");
@@ -451,7 +451,7 @@ function addElement(adresse) {
 				removeAuthorUrlBtn.setAttribute("data-adresse", adresse);
 				removeAuthorUrlBtn.setAttribute("data-role", "remove");
 				removeAuthorUrlBtn.setAttribute("title", "Retirer l'URL de l'auteur");
-				removeAuthorUrlBtn.innerHTML = '<img src="../assets/svg/x.svg" alt="X">';
+				removeAuthorUrlBtn.innerHTML = '<img src="assets/svg/x.svg" alt="X">';
 
 				// Créer un div pour l'input de l'URL de l'auteur et le bouton de suppression (dans une "row")
 				const authorUrlRow = document.createElement("div");
@@ -510,7 +510,7 @@ function addElement(adresse) {
 				removeAuthorIconBtn.setAttribute("data-adresse", adresse);
 				removeAuthorIconBtn.setAttribute("data-role", "remove");
 				removeAuthorIconBtn.setAttribute("title", "Retirer l'icône de l'auteur");
-				removeAuthorIconBtn.innerHTML = '<img src="../assets/svg/x.svg" alt="X">';
+				removeAuthorIconBtn.innerHTML = '<img src="assets/svg/x.svg" alt="X">';
 
 				// Ajouter les éléments au groupe d'options
 				authorIconOptions.appendChild(useFileCheckbox);
@@ -568,7 +568,7 @@ function addElement(adresse) {
 				removeFieldBtn.setAttribute("data-adresse", adresse);
 				removeFieldBtn.setAttribute("data-role", "remove");
 				removeFieldBtn.setAttribute("title", "Retirer ce field");
-				removeFieldBtn.innerHTML = '<img src="../assets/svg/x.svg" alt="X">';
+				removeFieldBtn.innerHTML = '<img src="assets/svg/x.svg" alt="X">';
 
 				// Écouter les événements click du bouton "remove"
 				removeFieldBtn.addEventListener("click", handleEvent);
@@ -631,7 +631,7 @@ function addElement(adresse) {
 				removeImageBtn.setAttribute("data-adresse", adresse);
 				removeImageBtn.setAttribute("data-role", "remove");
 				removeImageBtn.setAttribute("title", "Retirer l'image");
-				removeImageBtn.innerHTML = '<img src="../assets/svg/x.svg" alt="X">';
+				removeImageBtn.innerHTML = '<img src="assets/svg/x.svg" alt="X">';
 
 				// Ajouter les éléments au groupe d'options
 				imageOptionsContainer.appendChild(useFileCheckboxImage);
@@ -689,7 +689,7 @@ function addElement(adresse) {
 				removeThumbnailBtn.setAttribute("data-adresse", adresse);
 				removeThumbnailBtn.setAttribute("data-role", "remove");
 				removeThumbnailBtn.setAttribute("title", "Retirer le thumbnail");
-				removeThumbnailBtn.innerHTML = '<img src="../assets/svg/x.svg" alt="X">';
+				removeThumbnailBtn.innerHTML = '<img src="assets/svg/x.svg" alt="X">';
 
 				// Ajouter les éléments au groupe d'options
 				thumbnailOptionsContainer.appendChild(useFileCheckboxThumbnail);
@@ -719,7 +719,7 @@ function addElement(adresse) {
 				removeFooterBtn.setAttribute("data-adresse", adresse);
 				removeFooterBtn.setAttribute("data-role", "remove");
 				removeFooterBtn.setAttribute("title", "Retirer le footer");
-				removeFooterBtn.innerHTML = '<img src="../assets/svg/x.svg" alt="X">';
+				removeFooterBtn.innerHTML = '<img src="assets/svg/x.svg" alt="X">';
 
 				// Créer un div pour l'input footer.text et le bouton de suppression (dans une "row")
 				const footerTextRow = document.createElement("div");
@@ -788,7 +788,7 @@ function addElement(adresse) {
 				removeFooterIconUrlBtn.setAttribute("data-adresse", adresse);
 				removeFooterIconUrlBtn.setAttribute("data-role", "remove");
 				removeFooterIconUrlBtn.setAttribute("title", "Retirer l'icône du footer");
-				removeFooterIconUrlBtn.innerHTML = '<img src="../assets/svg/x.svg" alt="X">';
+				removeFooterIconUrlBtn.innerHTML = '<img src="assets/svg/x.svg" alt="X">';
 
 				// Ajouter les éléments au groupe d'options
 				footerIconOptions.appendChild(useFileCheckboxFooterIcon);
@@ -821,7 +821,7 @@ function addElement(adresse) {
 			removeBtn.setAttribute("data-adresse", "content");
 			removeBtn.setAttribute("data-role", "remove");
 			removeBtn.setAttribute("title", "Retirer le message");
-			removeBtn.innerHTML = '<img src="../assets/svg/x.svg" alt="X">';
+			removeBtn.innerHTML = '<img src="assets/svg/x.svg" alt="X">';
 
 			// Gestion clic sur les éléments créés
 			removeBtn.addEventListener("click", handleEvent);
@@ -874,7 +874,7 @@ function addElement(adresse) {
 			removeEmbedBtn.setAttribute("data-adresse", adresse);
 			removeEmbedBtn.setAttribute("data-role", "remove");
 			removeEmbedBtn.setAttribute("title", "Retirer l'embed");
-			removeEmbedBtn.innerHTML = '<img src="../assets/svg/x.svg" alt="X">';
+			removeEmbedBtn.innerHTML = '<img src="assets/svg/x.svg" alt="X">';
 			removeEmbedBtn.addEventListener("click", handleEvent);
 
 			const embedContainer = document.querySelector(`[data-role="container"][data-adresse="${adresse}"]`);
@@ -943,12 +943,12 @@ function initElement(adresse) {
 					fileElement.innerHTML = `
 						<label>
 							<h3>Fichier ${i + 1}</h3>
-							<div data-role="add" data-adresse="dummy"><img src="../assets/svg/plus.svg" alt="+" /></div>
-							<img src="../assets/svg/file.svg" alt="" />
+							<div data-role="add" data-adresse="dummy"><img src="assets/svg/plus.svg" alt="+" /></div>
+							<img src="assets/svg/file.svg" alt="" />
 							<input type="file" data-role="input" data-adresse="files.${i}">
 							<span data-role="label" data-adresse="files.${i}"></span>
 						</label>
-						<button data-role="remove" data-adresse="files.${i}"><img src="../assets/svg/x.svg" alt="X" /></button>`;//<script>
+						<button data-role="remove" data-adresse="files.${i}"><img src="assets/svg/x.svg" alt="X" /></button>`;//<script>
 
 					// Ajouter l'élément généré au container "files"
 					filesContainer.appendChild(fileElement);
@@ -1029,7 +1029,7 @@ function initElement(adresse) {
 	}
 
 	// Ajoutez une image SVG au bouton (remplacez "image.svg" par le chemin de votre image SVG)
-	addButton.innerHTML += '<img src="../assets/svg/plus.svg" alt="+">';
+	addButton.innerHTML += '<img src="assets/svg/plus.svg" alt="+">';
 
 	// Écoutez l'événement click sur le bouton d'ajout
 	addButton.addEventListener("click", handleEvent);
