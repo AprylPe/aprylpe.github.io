@@ -427,7 +427,7 @@
 
 					if ((autocomplete || force) && this.grille[i].p.length === 1) { // Si la cellule n'accepte qu'une seule valeur
 						let contraintes = this.grille.reduce((acc, c, j) => { // Recherche des cellules partageant la même ligne/colonne/case et acceptant la valeur de la cellule testée
-							if ((i != j) && (c.raw === this.grille[i].raw || c.col === this.grille[i].col || c.box === this.grille[i].box) && c.p.includes(this.grille[i].p[0])) { acc.push(j)}
+							if ((i != j) && (c.raw === this.grille[i].raw || c.col === this.grille[i].col || c.box === this.grille[i].box) && c.p.includes(this.grille[i].p[0])) acc.push(j)
 							return acc;
 						}, []);
 						for (let j of contraintes) {
@@ -679,6 +679,7 @@
 						// 6. Réinitialisation des cellules déverrouillées
 						this.resetUnlock();
 						this.updateUI()
+						Solver.changeMode('attempt')
 					}
 				}
 				requestAnimationFrame(loop)
