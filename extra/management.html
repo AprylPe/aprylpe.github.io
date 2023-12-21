@@ -56,8 +56,9 @@ section h1, section h2 {
 	}
 }
 
-
-
+li {
+	margin: 0 0 0 10px;
+}
 
 fieldset {
 	margin-bottom: 20px;
@@ -102,7 +103,7 @@ fieldset.valid {
 }
 
 #legende-container th, #legende-container td {
-	padding: 8px;
+	padding: 6px;
 	text-align: left;
 }
 
@@ -112,6 +113,9 @@ fieldset.valid {
 #legende-color-C { background-color: #FAD02E; }
 #legende-color-D { background-color: #F1948A; }
 
+.legende-color {
+	width: 16px;
+}
 
 	</style>
 </head>
@@ -162,15 +166,14 @@ fieldset.valid {
 			<p>
 				Si aucun cas ne semble correspondre exactement, vous procéderez cependant à un choix,
 				en donnant :
-				<br/>
-				<ul>
-					<li>La note 2 à l'attitude la plus proche de la vôtre</li>
-					<li>La note 1 à l'attitude qui vous paraît moins opportune, sans que vous la rejetiez
-						totalement
-					</li>
-					<li>La note 0 à l'attitude la plus éloignée de la vôtre</li>
-				</ul>
 			</p>
+			<ul>
+				<li>La note 2 à l'attitude la plus proche de la vôtre</li>
+				<li>La note 1 à l'attitude qui vous paraît moins opportune, sans que vous la rejetiez
+					totalement
+				</li>
+				<li>La note 0 à l'attitude la plus éloignée de la vôtre</li>
+			</ul>
 			<p>
 				En résumé, pour les cas 1 à 20, la somme de vos réponses à chaque cas doit toujours
 				représenter 3 points, en attribuant <b>toujours</b> la note 0…
@@ -187,14 +190,12 @@ fieldset.valid {
 			</p>
 
 			<h2>Quelques points de vocabulaire :</h2>
-			<p>
-				<ul>
-					<li>Le terme manager est utilisé ici dans un sens large.</li>
-					<li>Certains termes sont utilisés au masculin. Il peut tout aussi bien s'agir de femmes. Ces
-						formulations sont utilisées uniquement par souci de simplification.
-					</li>
-				</ul>
-			</p>
+			<ul>
+				<li>Le terme manager est utilisé ici dans un sens large.</li>
+				<li>Certains termes sont utilisés au masculin. Il peut tout aussi bien s'agir de femmes. Ces
+					formulations sont utilisées uniquement par souci de simplification.
+				</li>
+			</ul>
 			<p>
 				Ce questionnaire ne constitue pas une évaluation. Vos résultats individuels ne seront pas
 				communiqués à d'autres personnes.
@@ -365,7 +366,7 @@ fieldset.valid {
 				<label><input type="number" name="q21-3" min="0" max="4" list="choix4" data-cat="C"> Si je réussis, ce sera avec toute mon équipe.</label>
 				<label><input type="number" name="q21-4" min="0" max="4" list="choix4" data-cat="D"> Mes résultats parlent pour moi.</label>
 			</fieldset>
-			<button id="valider">Terminer</button>
+			<a id="valider" class="btn">Terminer</a>
 		</section>
 		<section id="resultats" style="display: none;">
 			<h2>Résultats</h2>
@@ -618,7 +619,7 @@ function handleInputEvent(e) {
 		// Trier la liste des valeurs dans l'ordre croissant
 		const sortedValues = Array.from(inputsInFieldset).map(input => parseInt(input.value, 10)).sort((a, b) => a - b);
 
-		// TODO : valider le contenu du fieldset, listes acceptées : 0 0 1 3 et 0 0 0 4
+		// valider le contenu du fieldset, listes acceptées : 0 0 1 3 et 0 0 0 4
 		if ((sortedValues[0] === 0 && sortedValues[1] === 0) && ((sortedValues[2] === 1 && sortedValues[3] === 3) || (sortedValues[2] === 0 && sortedValues[3] === 4))) { // Test à modifier
 			fieldSet.classList.add('valid');
 		} else {
