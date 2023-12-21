@@ -663,7 +663,7 @@ function addPath(svg, startX, startY, endX, endY, isLarge) {
 	path.setAttribute('d', [
 		'M', 100+100*startX, 100+100*startY,
 		'A1', 1, 0, isLarge ? '11' : '01', 100+100*endX, 100+100*endY,
-		'L0 0Z'
+		'L100 100Z'
 	].join(' '));
 
 	svg.appendChild(path);
