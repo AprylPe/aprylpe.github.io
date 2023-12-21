@@ -371,7 +371,7 @@ fieldset.valid {
 		<section id="resultats" style="display: none;">
 			<h2>Résultats</h2>
 			<div id="resultats-container">
-				<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="-1-1 2 2" id="graph"></svg>
+				<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 200 200" id="graph"></svg>
 				<div id="legende-container">
 					<h3>Légende</h3>
 					<table>
@@ -569,11 +569,10 @@ function handleInputEvent(e) {
 
 		// Trier la liste des valeurs dans l'ordre croissant
 		const s = Array.from(inputsInFieldset).map(input => parseInt(input.value, 10)).sort((a, b) => a - b);
-		console.log(s)
+
 		// Si la deuxième valeur est 0 et la troisième est 3 ou la deuxième est 1 et la troisième est 2, alors fieldset class valid
 		if (s[0] === 0 && ((s[1] === 0 && s[2] === 3) || (s[1] === 1 && s[2] === 2))) {
-			console.log(fieldSet.classList.add('valid'));
-			console.log("valid")
+			fieldSet.classList.add('valid')
 		} else {
 			// Sinon, pas de classe pour le fieldset
 			fieldSet.classList.remove('valid');
@@ -581,7 +580,6 @@ function handleInputEvent(e) {
 	}
 	// Si la valeur max est 4 (questions 21)
 	if (maxAttributeValue === "4") {
-		console.log(e.target.value)
 		// Si la valeur actuelle de l'input est 4
 		if (e.target.value == 4) {
 			// Mettre la valeur des autres inputs à 0
@@ -592,8 +590,7 @@ function handleInputEvent(e) {
 			// Ajouter la classe "valid" au fieldset
 			fieldSet.classList.add('valid');
 
-			// Fin
-			return;
+			return // Fin
 		}
 
 		// Compter le nombre d'occurrences des valeurs "0", "1" et "3"
@@ -664,8 +661,8 @@ function calculatePoints() {
 function addPath(svg, startX, startY, endX, endY, isLarge) {
 	const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
 	path.setAttribute('d', [
-		'M', startX, startY,
-		'A1', 1, 0, isLarge ? '11' : '01', endX, endY,
+		'M', 100+100*startX, 100+100*startY,
+		'A1', 1, 0, isLarge ? '11' : '01', 100+100*endX, 100+100*endY,
 		'L0 0Z'
 	].join(' '));
 
