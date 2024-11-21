@@ -1,42 +1,152 @@
 <!DOCTYPE HTML>
 <head>
 	<style>
-		a {
-			padding: 8px;
-			border-radius: 8px;
-			display: inline-flex;
-			align-items: center;
-			text-decoration: none;
-			color: #fff;
-			font-weight: bold;
+		body {
+			margin: 0;
+			overflow: hidden;
+			font-family: Arial, Helvetica;
 		}
-		a:hover {
-			background-color: #890000;
-		}
-		a:hover:after {
-			content: "La boutique du rat";
-			margin-left: 8px;
-			display: inline-block;
-		}
-		img {
-			width: 48px;
-			height: 48px;
+		#container {
+			margin: auto;
+			width: 100vh;
+			max-width: 100vw;
+			height: 100vh;
+			max-height: 100vw;
+			overflow: hidden;
+			display: flex;
+			flex-direction: column;
+			justify-content: flex-end;
 		}
 
-		#position {
-			position: fixed;
-			top: 50%;
-			left: 0px;
+		#lobby, #question, #top {
+			display: none;
+		}
+		.lobby #lobby, .question-empty #question, .question-timer #question, .question-timeout #question, .question-rep #question, .top #top {
+			display: flex;
+			margin: 0 0 10vh 0;
+			flex-direction: column;
+			align-items: center;
+		}
+
+		p {
+			margin: 0;
+			padding: 0;
+		}
+
+		.title {
+			z-index: 10;
+			border: solid 0.5vh #222;
+			border-radius: 2vh;
+			height: 5vh;
+			width: 86vh;
+			padding: 1vh;
+			overflow: hidden;
+			background: #f60;
+			margin: 0 0 -4vh 0;
+			text-align: center;
+			font-size: 2.4vh;
+			font-weight: bold;
+			display: flex;
+			justify-content: center;
+			align-items: center;
+			flex-direction: column;
+		}
+		.cadre {
+			z-index: 5;
+			border: solid 0.5vh #222;
+			border-radius: 2vh;
+			height: 25vh;
+			width: 96vh;
+			padding: 4vh 1vh 1vh 1vh;
+			overflow: hidden;
+			background: #fd2;
+			display: flex;
+			justify-content: center;
+			align-items: center;
+			font-size: 1.8vh;
+			flex-direction: column;
+			gap: 1vh;
+		}
+		#question .title {
+			width: 24vh;
+			align-items: flex-start;
+			margin: 0 64vh -2vh 0;
+		}
+		#question .cadre {
+			padding: 2vh 1vh 1vh 1vh;
+		}
+		.cadre #question-text {
+			font-size: 2.4vh;
+			font-weight: bold;
+			height: 8vh;
+			display: flex;
+			align-items: center;
+		}
+		.cadre .resp-row {
+			display: flex;
+			gap: 1vh;
+			align-self: stretch;
+		}
+		.cadre button {
+			flex: 1;
+			border: solid 0.3vh #222;
+			border-radius: 3.5vh;
+			height: 7vh;
+			display: flex;
+			background: #fff;
+			font-size: 2vh;
+			font-weight: bold;
+			padding: 1vh 3vh;
+			text-align: left;
+			align-items: center;
+		}
+		.cadre button:last-of-type {
+			text-align: right;
+			justify-content: flex-end;
+		}
+		#timer {
+			width: 12vh;
+			height: 12vh;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			margin: -6.5vh 0;
+			border-radius: 50%;
+			border: solid 0.5vh #222;
+			background: #fff;
+			z-index: 8;
+			font-size: 2.6vh;
+			font-weight: bold;
 		}
 	</style>
-	<title>Hello World!</title>
+	<title>Quiz</title>
 	<script src="https://extension-files.twitch.tv/helper/v1/twitch-ext.min.js"></script>
 </head>
 <body>
-	<div id="position">
-		<a href="https://www.laboutiquedurat.com/" target="_blank">
-			<img src="./logo.png"/>
-		</a>
+	<div id="container" class="question-timer">
+		<div id="lobby">
+			<div class="title"><p>Super Blind Test</p></div>
+			<div class="cadre"><p>Le jeu commence bientôt...</p></div>
+		</div>
+		<div id="question">
+			<div class="title">
+				<p>Question <span id="question-count">1</span></p>
+				<p>Score: <span id="score">12345</span></p>
+			</div>
+			<div class="cadre">
+				<p id="question-text">Combien fait 2 + 2 ?</p>
+				<div class="resp-row">
+					<button data-name="A">2</button>
+					<button data-name="B">22</button>
+				</div>
+				<div id="timer">10000</div>
+				<div class="resp-row">
+					<button data-name="A">4</button>
+					<button data-name="B">Je n'ai pas assez de doigts pour compter</button>
+				</div>
+			</div>
+		</div>
+		<div id="top"></div>
 	</div>
 	<script>console.log(Twitch)</script>
 </body>
