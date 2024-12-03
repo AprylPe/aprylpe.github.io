@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Prévisualisation des notes de musique</title>
+  <style>
+	body {
+		background: #236;
+	}
+	#notes-svg {
+		transform: scaleY(-1);
+	}
+	path.w {
+		fill: #eee;
+	}
+	path.w:hover {
+		fill: #aaf;
+	}
+	path.b {
+		fill: #333;
+	}
+	path.b:hover {
+		fill: #227;
+	}
+	#previous-line, #next-line {
+		fill: #008;
+	}
+	#previous-line:hover, #next-line:hover {
+		fill: #44d;
+	}
+	#controls {
+		display: flex;
+	}
+	#controls>div {
+		flex: 1;
+	}
+  </style>
+</head>
+<body>
+  <div id="notes-container">
+    <svg id="notes-svg"></svg>
+  </div>
+  <div id="piano-container">
+  </div>
+  <div id="controls">
+	<div>
+		<p>Sauvegarde</p>
+		<button id="btn-open">Ouvrir</button>
+		<button id="btn-save">Enregistrer</button>
+	</div>
+	<div>
+		<p>Navigation</p>
+		<button id="btn-next-line">^</button>
+		<button id="btn-last-line">^</button>
+		<button id="btn-prev-line">V</button>
+		<button id="btn-first-line">V</button>
+	</div>
+	<div>
+		<p>Edition</p>
+		<button id="btn-add-line">+</button>
+		<button id="btn-del-line">X</button>
+		<button id="btn-copy-line">Copier</button>
+		<button id="btn-paste-line">Coller</button>
+	</div>
+	<div>
+		<p>Lecture</p>
+		<button id="btn-play-all">Play all</button>
+		<button id="btn-play-here">Play</button>
+		<button id="btn-stop">Stop</button>
+		<button id="btn-rec">Rec</button>
+	</div>
+	<div>
+		<p>Options</p>
+		// BPM
+		// Début de note
+		// Fin de note
+	</div>
+  </div>
+  <div>
+    <button id="load-button">Charger un fichier</button>
+    <button id="export-button">Exporter un fichier</button>
+    <label for="note-duration">Durée d'une note:</label>
+    <input type="number" id="note-duration" min="0" value="2">
+    <label for="notes-per-measure">Nombre de notes par mesure:</label>
+    <input type="number" id="notes-per-measure" min="0" value="4">
+    <button id="play-button" onclick="play()">Jouer</button>
+  </div>
+  <script src="script.js"></script>
+</body>
+</html>
