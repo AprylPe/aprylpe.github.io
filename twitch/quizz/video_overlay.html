@@ -18,10 +18,10 @@
 			justify-content: flex-end;
 		}
 
-		#lobby, #question, #top {
+		#lobby, #question, #top, #loading, #offline {
 			display: none;
 		}
-		.lobby #lobby, .question-empty #question, .question-timer #question, .question-timeout #question, .question-rep #question, .top #top {
+		.lobby #lobby, .question-empty #question, .question-timer #question, .question-timeout #question, .question-rep #question, .top #top, .loading #loading, .offline #offline {
 			display: flex;
 			margin: 0 0 10vh 0;
 			flex-direction: column;
@@ -118,12 +118,52 @@
 			font-size: 2.6vh;
 			font-weight: bold;
 		}
+		.popup {
+			display: inline-block;
+			max-width: 90vw;
+			min-width: 0px;
+			white-space: nowrap;
+			border-style: solid;
+			border-width: 1px;
+			border-color: #fff3;
+			border-radius: 0.4rem;
+			background-color: #18181bE6;
+			box-shadow: 0 4px 8px #0007, 0 0px 4px #0007;
+			color: #fff;
+			overflow: hidden;
+		}
+		.popup h1 {
+			background-color: #18181b;
+			font-size: 0.8rem;
+			font-weight: 600;
+			margin: 0;
+			text-align: center;
+			padding: 4px;
+		}
+		.popup p {
+			margin: 9px 9px 0 9px;
+			font-size: 0.8rem;
+			font-weight: 200;
+		}
+		.popup a {
+			color: #bf94ff;
+			text-decoration: underline;
+			cursor: pointer;
+		}
+		.popup a:hover {
+			color: #9147ff;
+		}
+		.popup .close-link {
+			margin: 8px;
+			display: block;
+			justify-self: end;
+		}
 	</style>
 	<title>Quiz</title>
 	<script src="https://extension-files.twitch.tv/helper/v1/twitch-ext.min.js"></script>
 </head>
 <body>
-	<div id="container" class="question-timer">
+	<div id="container" class="loading">
 		<div id="lobby">
 			<div class="title"><p>Super Blind Test</p></div>
 			<div class="cadre"><p>Le jeu commence bientôt...</p></div>
@@ -147,76 +187,83 @@
 			</div>
 		</div>
 		<div id="top"></div>
+		<div id="loading">
+			<div class="popup">
+				<h1>Connecte toi pour participer</h1>
+				<p><b>QuizBallZ</b> a besoin d'accéder à ton identifiant d'utilisateur Twitch.</p>
+				<p>Si tu acceptes nos <a target="_blank">conditions générales d'utilisation (CGU)</a>,<br/>
+				autorise <b>QuizBallZ</b> à accéder à ton identifiant pour jouer.</p>
+				<a class="close-link" onClick="switchView('hide');">Fermer</a>
+			</div>
+		</div>
+		<div id="offline">
+			<div class="popup">
+				<h1>Connexion perdue avec l'extension</h1>
+				<p>L'extension <b>QuizBallZ</b> s'est déconnectée.</p>
+				<p>Si tu veux, tu peux <a onClick="/* Actualiser l'iframe */ switchView('hide'); setTimeout(() => {location.reload();}, 1000);">essayer de te reconnecter</a>.</p>
+				<a class="close-link" onClick="switchView('hide');">Fermer</a>
+			</div>
+		</div>
 	</div>
 	<script>
 		console.log(Twitch)
 
+		function switchView(view) {
+			document.getElementById('container').className = view;
+		}
+
 		window.Twitch.ext.onAuthorized(function(auth) {
+
+			switchView("hide");
+
+			// TODO : Remove debugs
+			console.log(Twitch);
 			console.log(auth);
-			console.log('The JWT that will be passed to the EBS is', auth.token);
-			console.log('The channel ID is', auth.channelId);
-		});
 
-		// Fonction pour générer un opaque ID unique
-		function generateOpaqueId() {
-			return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-				const r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
-				return v.toString(16);
-			});
-		}
+			// TODO : Ajouter un watchdog pour reconnecter si socket fermé
 
-		// Récupérer les paramètres de l'URL
-		const urlParams = new URLSearchParams(window.location.search);
-		const userId = urlParams.get('id'); // ID du joueur ou de l'admin
-		const host = urlParams.get('host'); // Nom de la session
-		const opaqueId = generateOpaqueId(); // Générer un opaque ID unique
+			// Ouvrir la connexion WebSocket
+			const socket = new WebSocket(`ws://localhost:8080?id=${Twitch.ext.viewer.id}&host=${auth.channelId}&token=${auth.token}`); // DEV
+//~ 			const socket = new WebSocket(`ws://localhost:8080?id=${Twitch.ext.viewer.id}&host=${auth.channelId}&token=${auth.token}`); // PROD
 
-		// Adresse du serveur WebSocket avec les paramètres d'URL
-		const serverAddress = `ws://localhost:8080?id=${userId}&host=${host}&opaqueId=${opaqueId}`;
-
-		// Ouvrir la connexion WebSocket
-		const socket = new WebSocket(serverAddress);
-
-		// Gérer les messages reçus du serveur
-		socket.onmessage = function(event) {
-			const message = JSON.parse(event.data);
-			console.log('Message received from server:', message);
-			// Traiter le message en fonction de son type
-			switch (message.type) {
-				case 'EVENT':
-					handleEvent(message);
-					break;
-				case 'PING':
-					handlePing();
-					break;
-				default:
-					console.log('Unknown message type:', message.type);
-			}
-		};
-
-		// Gérer les événements reçus du serveur
-		function handleEvent(message) {
-			// Logique pour traiter les événements
-			console.log('Event received:', message.eventname);
-		}
-
-		// Répondre au PING avec un PONG
-		function handlePing() {
-			const pongMessage = {
-				type: 'PONG'
+			// Gérer les messages reçus du serveur
+			socket.onmessage = function(event) {
+				const message = JSON.parse(event.data);
+				console.log('Message received from server:', message);
+				// Traiter le message en fonction de son type
+				switch (message.type) {
+					case 'EVENT':
+						handleEvent(message);
+						break;
+					case 'PING':
+						handlePing();
+						break;
+					default:
+						console.log('Unknown message type:', message.type);
+				}
 			};
-			socket.send(JSON.stringify(pongMessage));
-			console.log('PONG message sent');
-		}
 
-		// Gérer la fermeture de la connexion
-		socket.onclose = function() {
-			console.log('WebSocket connection closed');
-		};
+			// Gérer les événements reçus du serveur
+			function handleEvent(message) {
+				// Logique pour traiter les événements
+				console.log('Event received:', message.eventname);
+			}
 
-		// Gérer les erreurs de connexion
-		socket.onerror = function(error) {
-			console.error('WebSocket error:', error);
-		};
+			// Répondre au PING avec un PONG
+			function handlePing() {
+				socket.send(JSON.stringify({type: 'PONG'}));
+			}
+
+			// Gérer la fermeture de la connexion
+			socket.onclose = function() {
+				console.log('WebSocket connection closed');
+				switchView("offline");
+			};
+
+			// Gérer les erreurs de connexion
+			socket.onerror = function(error) {
+				console.error('WebSocket error:', error);
+			};
+		});
 	</script>
 </body>
