@@ -2,19 +2,50 @@
 <head>
 	<meta charset="UTF-8">
 	<style>
+		@media (prefers-color-scheme: dark) {
+			body {
+				background: #18181b;
+				color: white;
+			}
+			.btn {
+				color: #fff;
+			}
+			select, textarea {
+				background: #111;
+				color: #eee;
+			}
+
+			::-webkit-scrollbar {
+				width: 10px;
+				height: 10px;
+			}
+
+			::-webkit-scrollbar-track, ::-webkit-scrollbar-corner {
+				background: #000;
+			}
+
+			::-webkit-scrollbar-thumb {
+				background: #888;
+				border-radius: 5px
+			}
+			::-webkit-scrollbar-thumb:hover {
+				background: #555;
+			}
+		}
+
 		body {
 			margin: 0;
 			overflow: hidden;
 			font-family: Arial, Helvetica;
 		}
 
-        #edit-mode, #game-mode {
-            display: none;
-        }
-        #edit-mode.active, #game-mode.active {
+		#edit-mode, #game-mode {
+			display: none;
+		}
+		#edit-mode.active, #game-mode.active {
 			display: flex;
 			flex-direction: column;
-        }
+		}
 
 		h1 {
 			margin: 0 0 8px 0;
@@ -27,14 +58,15 @@
 		}
 		.btn {
 			display: flex;
-			height: 1.4em;
+			height: 22px;
 			padding: 0 16px;
-			font-size: 1em;
+			font-size: 14px;
 			background: #8882;
 			border: solid 1px #888;
 			border-radius: 4px;
 			justify-content: center;
 			align-items: center;
+			margin: 0 0 8px 0;
 		}
 		.btn:hover {
 			background: #8884;
@@ -57,14 +89,14 @@
 			white-space: pre;
 			margin: 0 0 8px 0;
 		}
-    </style>
+	</style>
 	<title>QuizZ - Interface admin</title>
 	<script src="https://extension-files.twitch.tv/helper/v1/twitch-ext.min.js"></script>
 </head>
 <body>
-    <div id="edit-mode" class="active">
-        <h1>Préparation de la partie</h1>
-        <div class="flex">
+	<div id="edit-mode" class="active">
+		<h1>Préparation de la partie</h1>
+		<div class="flex">
 			<p><b>Astuce:</b> Importez vos questions depuis un fichier.</p>
 			<label class="btn">
 				Importer
@@ -85,223 +117,304 @@
 				<button class="btn" type="button" id="export-btn">Exporter</button>
 			</div>
 		</div>
-		<button class="btn" type="button" onclick="validateQuestions()">Lancer la partie</button>
-    </div>
+		<button class="btn" type="button" id="launch-btn">Lancer la partie</button>
+	</div>
 
-    <div id="game-mode">
-        <h2>Mode Déroulement</h2>
-        <!-- Boutons pour gérer le déroulement de la partie -->
-        <button onclick="toggleGameVisibility()">Afficher/Masquer le Jeu</button>
-        <button onclick="nextQuestion()">Question Suivante</button>
-        <button onclick="showRanking()">Afficher le Classement</button>
-        <button onclick="endGame()">Terminer la Partie</button>
-        <!-- Statistiques -->
-        <div id="stats">
-            <p>Nombre de joueurs total: <span id="total-players">0</span></p>
-            <p>Nombre de joueurs actifs: <span id="active-players">0</span></p>
-        </div>
-    </div>
+	<div id="game-mode">
+		<h2>Gestion de la partie en cours</h2>
+
+		<p id="game-status">Le jeu est actuellement masqué</p>
+
+		<button class="btn" id="">Masquer le jeu</button>
+		<button class="btn" id="">Afficher le lobby</button>
+		<button class="btn" id="">Afficher le classement</button>
+		<button class="btn" id="">Afficher la question</button>
+		<button class="btn" id="">Lancer la question</button>
+		<button class="btn" id="">Question suivante</button>
+		<p id="question-status">Nb de réponses: 0<br>Temps restant: 0s</p>
+
+	</div>
 
 
 	<script>console.log(Twitch)</script>
 	<script>
-        let questions = [];
+		let questions = [];
 
 		const DomStatus = document.getElementById('status');
 		const DomQuestions = document.getElementById('questions');
 		const fileInput = document.getElementById('file-input');
 
-        // Fonction pour importer les questions depuis un fichier
-        function importQuestionsFromFile() {
-            const file = fileInput.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(event) {
-                    const content = event.target.result;
-                    DomQuestions.value = content;
-                    analyzeQuestions();
-                };
-                reader.readAsText(file);
-            }
-        }
+		DomQuestions.addEventListener('keydown', function(event) {
+			if (event.key === 'Tab') {
+				const start = DomQuestions.selectionStart;
+				const end = DomQuestions.selectionEnd;
 
-        // Fonction pour analyser le contenu du textarea
-        function analyzeQuestions() {
-            const questionsText = DomQuestions.value;
-            const detectedFormat = detectFormat(questionsText);
+				if(start == end) {
+					event.preventDefault(); // Empêche le comportement par défaut
+
+					// Insérer une tabulation à l'emplacement du curseur
+					DomQuestions.value = DomQuestions.value.substring(0, start) + '\t' + DomQuestions.value.substring(end);
+
+					// Déplacer le curseur après la tabulation
+					DomQuestions.selectionStart = DomQuestions.selectionEnd = start + 1;
+				}
+			}
+		});
+
+		// Fonction pour importer les questions depuis un fichier
+		function importQuestionsFromFile() {
+			const file = fileInput.files[0];
+			if (file) {
+				const reader = new FileReader();
+				reader.onload = function(event) {
+					const content = event.target.result;
+					DomQuestions.value = content;
+					analyzeQuestions();
+				};
+				reader.readAsText(file);
+			}
+		}
+
+		// Fonction pour analyser le contenu du textarea
+		function analyzeQuestions() {
+			const questionsText = DomQuestions.value;
+			const detectedFormat = detectFormat(questionsText);
 			DomStatus.innerHTML = `Format détecté: ${detectedFormat}<br>Nombre de questions: ${questions.length}`;
-            if (detectedFormat) {
-                questions = parseQuestions(questionsText, detectedFormat);
-                DomStatus.innerHTML = `Format détecté: ${detectedFormat}<br>Nombre de questions: ${questions.length}`;
-            } else {
-                DomStatus.innerHTML = 'Format détecté: Aucun<br>Nombre de questions: 0';
-            }
-        }
+			if (detectedFormat) {
+				questions = parseQuestions(questionsText, detectedFormat);
+				DomStatus.innerHTML = `Format détecté: ${detectedFormat}<br>Nombre de questions: ${questions.length}`;
+				return true;
+			} else {
+				DomStatus.innerHTML = 'Format détecté: Aucun<br>Nombre de questions: 0';
+				return false;
+			}
+		}
 
-        // Fonction pour détecter le format des questions
-        function detectFormat(text) {
+		// Fonction pour détecter le format des questions
+		function detectFormat(text) {
 			if(text.match(/[^;]+;"?[a-d]"?;[^;]+;[^;]+;[^;]+;[^;]+/i)) {
-                return 'csv';
-            } else if (text.match(/[^\t]+\t"?[a-d]"?\t[^\t]+\t[^\t]+\t[^\t]+\t[^\t]+/i)) {
-                return 'tsv';
-            } else if (text.match(/\[[0-9]+]\s*\nquestion=[^\n]+\nreponse=[a-d]\na=[^\n]+\nb=[^\n]+\nc=[^\n]+\nd=[^\n]+/i)) {
-                return 'ini';
-            } else if (text.match(/^\s*[\s*\{[\W\w]+\}\s*\]\s*$/)) {
-                return 'json';
-            }
-            return null;
-        }
+				return 'csv';
+			} else if (text.match(/[^\t]+\t"?[a-d]"?\t[^\t]+\t[^\t]+\t[^\t]+\t[^\t]+/i)) {
+				return 'tsv';
+			} else if (text.match(/\[[0-9]+]\s*\nquestion=[^\n]+\nreponse=[a-d]\na=[^\n]+\nb=[^\n]+\nc=[^\n]+\nd=[^\n]+/i)) {
+				return 'ini';
+			} else if (text.match(/^\s*[\s*\{[\W\w]+\}\s*\]\s*$/)) {
+				return 'json';
+			}
+			return null;
+		}
 
-        // Fonction pour parser les questions
-        function parseQuestions(text, format) {
-            let parsedQuestions = [];
-            if (format === 'csv') {
-                parsedQuestions = parseCSV(text);
-            } else if (format === 'tsv') {
-                parsedQuestions = parseTSV(text);
-            } else if (format === 'json') {
-                parsedQuestions = parseJSON(text);
-            } else if (format === 'ini') {
-                parsedQuestions = parseINI(text);
-            }
-            return parsedQuestions;
-        }
+		// Fonction pour parser les questions
+		function parseQuestions(text, format) {
+			let parsedQuestions = [];
+			if (format === 'csv') {
+				parsedQuestions = parseCSV(text);
+			} else if (format === 'tsv') {
+				parsedQuestions = parseTSV(text);
+			} else if (format === 'json') {
+				parsedQuestions = parseJSON(text);
+			} else if (format === 'ini') {
+				parsedQuestions = parseINI(text);
+			}
+			return parsedQuestions;
+		}
 
-        // Fonction pour parser les questions au format CSV
-        function parseCSV(text) {
-            const lines = text.split('\n');
-            let q = [];
-            lines.forEach(line => {
+		// Fonction pour parser les questions au format CSV
+		function parseCSV(text) {
+			const lines = text.split('\n');
+			let q = [];
+			lines.forEach(line => {
 				try {
 					const [question, reponse, a, b, c, d] = line.split(';');
 					if(d != undefined) q.push({ question, reponse, a, b, c, d });
 				} catch(e) {
 					console.log(e)
 				}
-            });
-            return q;
-        }
+			});
+			return q;
+		}
 
-        // Fonction pour parser les questions au format TSV
-        function parseTSV(text) {
-            const lines = text.split('\n');
-            let q = [];
-            lines.forEach(line => {
+		// Fonction pour parser les questions au format TSV
+		function parseTSV(text) {
+			const lines = text.split('\n');
+			let q = [];
+			lines.forEach(line => {
 				try {
 					const [question, reponse, a, b, c, d] = line.split('\t');
 					if(d != undefined) q.push({ question, reponse, a, b, c, d });
 				} catch(e) {
 					console.log(e)
 				}
-            });
-            return q;
-        }
+			});
+			return q;
+		}
 
-        // Fonction pour parser les questions au format JSON
-        function parseJSON(text) {
+		// Fonction pour parser les questions au format JSON
+		function parseJSON(text) {
 			try {
 				return JSON.parse(text);
 			} catch(e) {}
 			return [];
-        }
+		}
 
-        // Fonction pour parser les questions au format INI
-        function parseINI(text) {
-            const lines = text.split('\n');
-            let q = [];
-            let currentQuestion = null;
-            lines.forEach(line => {
-                if (line.includes('[')) {
-                    currentQuestion = { question: line.replace(/[\[\]]/g, '').trim(), reponse: '', a: '', b: '', c: '', d: '' };
-                    q.push(currentQuestion);
-                } else if (currentQuestion && line.includes('=')) {
-                    const [key, value] = line.split('=');
-                    currentQuestion[key.trim()] = value.trim();
-                }
-            });
-            return q;
-        }
+		// Fonction pour parser les questions au format INI
+		function parseINI(text) {
+			const lines = text.split('\n');
+			let q = [];
+			let currentQuestion = null;
+			lines.forEach(line => {
+				if (line.includes('[')) {
+					currentQuestion = { question: line.replace(/[\[\]]/g, '').trim(), reponse: '', a: '', b: '', c: '', d: '' };
+					q.push(currentQuestion);
+				} else if (currentQuestion && line.includes('=')) {
+					const [key, value] = line.split('=');
+					currentQuestion[key.trim()] = value.trim();
+				}
+			});
+			return q;
+		}
 
-        // Fonction pour exporter les questions
-        function exportQuestions() {
-            const format = document.getElementById('export-format').value;
-            let exportContent = '';
-            if (format === 'ini') {
-                exportContent = convertToINI(questions);
-            } else if (format === 'csv') {
-                exportContent = convertToCSV(questions);
-            } else if (format === 'tsv') {
-                exportContent = convertToTSV(questions);
-            } else if (format === 'json') {
-                exportContent = convertToJSON(questions);
-            }
-            downloadFile(exportContent, `questions.${format}`);
-        }
+		// Fonction pour exporter les questions
+		function exportQuestions() {
+			const format = document.getElementById('export-format').value;
+			let exportContent = '';
+			if (format === 'ini') {
+				exportContent = convertToINI(questions);
+			} else if (format === 'csv') {
+				exportContent = convertToCSV(questions);
+			} else if (format === 'tsv') {
+				exportContent = convertToTSV(questions);
+			} else if (format === 'json') {
+				exportContent = convertToJSON(questions);
+			}
+			downloadFile(exportContent, `questions.${format}`);
+		}
 
-        // Fonction pour convertir les questions au format INI
-        function convertToINI(questions) {
-            let iniContent = '';
-            questions.forEach((question, index) => {
-                iniContent += `[${index + 1}]\n`;
-                iniContent += `question=${question.question}\n`;
-                iniContent += `reponse=${question.reponse}\n`;
-                iniContent += `a=${question.a}\n`;
-                iniContent += `b=${question.b}\n`;
-                iniContent += `c=${question.c}\n`;
-                iniContent += `d=${question.d}\n`;
-            });
-            return iniContent;
-        }
+		// Fonction pour convertir les questions au format INI
+		function convertToINI(questions) {
+			let iniContent = '';
+			questions.forEach((question, index) => {
+				iniContent += `[${index + 1}]\n`;
+				iniContent += `question=${question.question}\n`;
+				iniContent += `reponse=${question.reponse}\n`;
+				iniContent += `a=${question.a}\n`;
+				iniContent += `b=${question.b}\n`;
+				iniContent += `c=${question.c}\n`;
+				iniContent += `d=${question.d}\n`;
+			});
+			return iniContent;
+		}
 
-        // Fonction pour convertir les questions au format CSV
-        function convertToCSV(questions) {
-            let csvContent = '';
-            questions.forEach(question => {
-                csvContent += `${question.question};${question.reponse};${question.a};${question.b};${question.c};${question.d}\n`;
-            });
-            return csvContent;
-        }
+		// Fonction pour convertir les questions au format CSV
+		function convertToCSV(questions) {
+			let csvContent = '';
+			questions.forEach(question => {
+				csvContent += `${question.question};${question.reponse};${question.a};${question.b};${question.c};${question.d}\n`;
+			});
+			return csvContent;
+		}
 
-        // Fonction pour convertir les questions au format TSV
-        function convertToTSV(questions) {
-            let tsvContent = '';
-            questions.forEach(question => {
-                tsvContent += `${question.question}\t${question.reponse}\t${question.a}\t${question.b}\t${question.c}\t${question.d}\n`;
-            });
-            return tsvContent;
-        }
+		// Fonction pour convertir les questions au format TSV
+		function convertToTSV(questions) {
+			let tsvContent = '';
+			questions.forEach(question => {
+				tsvContent += `${question.question}\t${question.reponse}\t${question.a}\t${question.b}\t${question.c}\t${question.d}\n`;
+			});
+			return tsvContent;
+		}
 
-        // Fonction pour convertir les questions au format JSON
-        function convertToJSON(questions) {
-            return JSON.stringify(questions, null, 2);
-        }
+		// Fonction pour convertir les questions au format JSON
+		function convertToJSON(questions) {
+			return JSON.stringify(questions, null, 2);
+		}
 
-        // Fonction pour télécharger un fichier
-        function downloadFile(content, filename) {
-            const blob = new Blob([content], { type: 'text/plain' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = filename;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-        }
+		// Fonction pour télécharger un fichier
+		function downloadFile(content, filename) {
+			const blob = new Blob([content], { type: 'text/plain' });
+			const url = URL.createObjectURL(blob);
+			const a = document.createElement('a');
+			a.href = url;
+			a.download = filename;
+			document.body.appendChild(a);
+			a.click();
+			document.body.removeChild(a);
+			URL.revokeObjectURL(url);
+		}
 
-        // Fonction pour valider et lancer la partie
-        function validateGame() {
-            // Logique pour valider les données et lancer la partie
-            console.log('Partie validée et lancée');
-            // Passer en mode déroulement
-            document.getElementById('edit-mode').classList.remove('active');
-            document.getElementById('game-mode').classList.add('active');
-        }
+		// Fonction pour valider et lancer la partie
+		function validateGame() {
+			if(analyzeQuestions()) {
+				// Questions détectées
+
+				// Logique pour valider les données et lancer la partie
+				let msg = validateQuestions(questions);
+
+				if(msg.length) {
+					// Problème dans les questions saisies
+					DomStatus.innerText = msg;
+				} else {
+					console.log('Partie validée et lancée');
+					// Passer en mode déroulement
+					document.getElementById('edit-mode').classList.remove('active');
+					document.getElementById('game-mode').classList.add('active');
+				}
+			} else {
+				// Données invalides, refuser de lancer la partie
+				DomStatus.innerHTML += "<br>Aucune question, la partie ne peut pas être lancée."
+			}
+		}
+
+		function validateQuestions(questions) {
+			for (let i = 0; i < questions.length; i++) {
+				const question = questions[i];
+
+				// Vérifier la clé "question"
+				if (typeof question.question !== 'string' || question.question.length < 1 || question.question.length > 140) {
+					return `Question ${i + 1}: La question doit être un texte de longueur comprise entre 1 et 140 caractères.`;
+				}
+
+				// Vérifier la clé "reponse"
+				if (question.reponse === undefined || !['a', 'b', 'c', 'd', 'A', 'B', 'C', 'D'].includes(question.reponse)) {
+					return `Question ${i + 1}: La réponse doit être A, B, C ou D.`;
+				}
+
+				if (typeof question.a !== 'string' || question.a.length < 1 || question.a.length > 32) {
+					return `Question ${i + 1}: La réponse A doit être un texte de longueur comprise entre 1 et 32 caractères.`;
+				}
+				if (typeof question.b !== 'string' || question.b.length < 1 || question.b.length > 32) {
+					return `Question ${i + 1}: La réponse B doit être un texte de longueur comprise entre 1 et 32 caractères.`;
+				}
+				if (typeof question.c !== 'string' || question.c.length < 1 || question.c.length > 32) {
+					return `Question ${i + 1}: La réponse C doit être un texte de longueur comprise entre 1 et 32 caractères.`;
+				}
+				if (typeof question.d !== 'string' || question.d.length < 1 || question.d.length > 32) {
+					return `Question ${i + 1}: La réponse D doit être un texte de longueur comprise entre 1 et 32 caractères.`;
+				}
+
+				// Vérifier la clé "b"
+				if (question.b === question.a) {
+					return `Question ${i + 1}: La réponse B doit être différente de la réponse A.`;
+				}
+
+				// Vérifier la clé "c"
+				if (question.c === question.a || question.c === question.b) {
+					return `Question ${i + 1}: La réponse C doit être différente des réponses A et B.`;
+				}
+
+				// Vérifier la clé "d"
+				if (question.d === question.a || question.d === question.b || question.d === question.c) {
+					return `Question ${i + 1}: La réponse D doit être différente des réponses A, B et C.`;
+				}
+			}
+
+			// Si toutes les validations sont passées
+			return '';
+		}
 
 
-        fileInput.addEventListener('change', importQuestionsFromFile);
-        DomQuestions.addEventListener('change', analyzeQuestions);
-        document.getElementById('export-btn').addEventListener('click', exportQuestions);
-        document.getElementById('launch-btn').addEventListener('click', validateGame);
-    </script>
+		fileInput.addEventListener('change', importQuestionsFromFile);
+		DomQuestions.addEventListener('change', analyzeQuestions);
+		document.getElementById('export-btn').addEventListener('click', exportQuestions);
+		document.getElementById('launch-btn').addEventListener('click', validateGame);
+	</script>
 </body>
