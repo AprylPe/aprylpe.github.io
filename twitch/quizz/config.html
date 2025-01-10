@@ -39,12 +39,26 @@
 			font-family: Arial, Helvetica;
 		}
 
-		#edit-mode, #game-mode {
+		#edit-mode, #game-mode, #loading, #offline-error {
 			display: none;
 		}
-		#edit-mode.active, #game-mode.active {
+		.edit #edit-mode,
+		.hide #game-mode,
+		.lobby #game-mode,
+		.question #game-mode,
+		.podium #game-mode,
+		.offline #offline-error
+		{
 			display: flex;
 			flex-direction: column;
+		}
+
+		.loading #loading {
+			display: flex;
+			justify-content: center;
+			padding: 20% 0;
+			flex-direction: row;
+			gap: 12px;
 		}
 
 		h1 {
@@ -89,12 +103,57 @@
 			white-space: pre;
 			margin: 0 0 8px 0;
 		}
+
+		.loading-dot {
+            width: 20px;
+            height: 20px;
+            background-color: #888;
+            border-radius: 50%;
+            animation: bounce 0.51s infinite alternate;
+        }
+        .loading-dot:nth-child(2) {
+            animation-delay: 0.17s;
+        }
+        .loading-dot:nth-child(3) {
+            animation-delay: 0.34s;
+        }
+        @keyframes bounce {
+            0%, 40% {
+                opacity: 0.2;
+				transform: translateY(0);
+			}
+			100% {
+                opacity: 1;
+                transform: translateY(-20px);
+            }
+        }
+
+		.popup h1 {
+			background-color: #18181b;
+			font-size: 18px;
+			font-weight: 600;
+			margin: 0 0 20px 0;
+			padding: 4px;
+		}
+		.popup p {
+			margin: 9px 9px 0 0;
+			font-size: 14px;
+			font-weight: 200;
+		}
+		.popup a {
+			color: #bf94ff;
+			text-decoration: underline;
+			cursor: pointer;
+		}
+		.popup a:hover {
+			color: #9147ff;
+		}
 	</style>
 	<title>QuizZ - Interface admin</title>
 	<script src="https://extension-files.twitch.tv/helper/v1/twitch-ext.min.js"></script>
 </head>
-<body>
-	<div id="edit-mode" class="active">
+<body><div id="mode" class="loading">
+	<div id="edit-mode">
 		<h1>Préparation de la partie</h1>
 		<div class="flex">
 			<p><b>Astuce:</b> Importez vos questions depuis un fichier.</p>
@@ -123,20 +182,36 @@
 	<div id="game-mode">
 		<h2>Gestion de la partie en cours</h2>
 
-		<p id="game-status">Le jeu est actuellement masqué</p>
+		<p id="game-status-hide">Le jeu est actuellement masqué</p>
+		<p id="game-status-lobby">Les joueurs peuvent voir: le lobby</p>
+		<p id="game-status-top">Les joueurs peuvent voir: le classement</p>
+		<p id="game-status-question">Les joueurs peuvent voir: la question</p>
 
-		<button class="btn" id="">Masquer le jeu</button>
-		<button class="btn" id="">Afficher le lobby</button>
-		<button class="btn" id="">Afficher le classement</button>
-		<button class="btn" id="">Afficher la question</button>
-		<button class="btn" id="">Lancer la question</button>
-		<button class="btn" id="">Question suivante</button>
+		<button class="btn" id="btn-hide">Masquer le jeu</button>
+		<button class="btn" id="btn-lobby">Afficher le lobby</button>
+		<button class="btn" id="btn-top">Afficher le classement</button>
+		<button class="btn" id="btn-question">Afficher la question</button>
+
+		<button class="btn" id="next-question">Question suivante</button>
+		<button class="btn" id="start-question">Lancer la question</button>
+		<div id="timer">
+			<p>Il reste 0 seconde</p>
+		</div>
+		<button class="btn" id="display-rep">Afficher la réponse</button>
 		<p id="question-status">Nb de réponses: 0<br>Temps restant: 0s</p>
 
 	</div>
-
-
-	<script>console.log(Twitch)</script>
+	<div id="loading">
+        <div class="loading-dot"></div>
+        <div class="loading-dot"></div>
+        <div class="loading-dot"></div>
+	</div>
+	<div id="offline-error" class="popup">
+        <h1>Connexion perdue avec l'extension</h1>
+		<p>L'extension <b>QuizBallZ</b> s'est déconnectée.</p>
+		<p>Si tu veux, tu peux <a onClick="/* Actualiser l'iframe */ switchView('loading'); setTimeout(() => {location.reload();}, 1000);">essayer de te reconnecter</a>.</p>
+	</div>
+</div>
 	<script>
 		let questions = [];
 
@@ -355,6 +430,8 @@
 				} else {
 					console.log('Partie validée et lancée');
 					// Passer en mode déroulement
+					// TODO : Packet nouvelle partie
+
 					document.getElementById('edit-mode').classList.remove('active');
 					document.getElementById('game-mode').classList.add('active');
 				}
@@ -416,5 +493,66 @@
 		DomQuestions.addEventListener('change', analyzeQuestions);
 		document.getElementById('export-btn').addEventListener('click', exportQuestions);
 		document.getElementById('launch-btn').addEventListener('click', validateGame);
+	</script>
+
+		<script>
+		console.log(Twitch)
+
+		function switchView(view) {
+			document.getElementById('mode').className = view;
+		}
+
+		window.Twitch.ext.onAuthorized(function(auth) {
+//~ 			switchView("hide");
+
+			// TODO : Remove debugs
+			console.log(Twitch);
+			console.log(auth);
+
+			// TODO : Ajouter un watchdog pour reconnecter si socket fermé
+
+			// Ouvrir la connexion WebSocket
+			const socket = new WebSocket(`ws://localhost:8080?admin=${auth.token}`); // DEV
+//~ 			const socket = new WebSocket(`ws://localhost:8080?admin=${auth.token}`); // PROD
+
+			// Gérer les messages reçus du serveur
+			socket.onmessage = function(event) {
+				const message = JSON.parse(event.data);
+				console.log('Message received from server:', message);
+				// Traiter le message en fonction de son type
+				switch (message.type) {
+					case 'EVENT':
+						handleEvent(message);
+						break;
+					case 'PING':
+						handlePing();
+						break;
+					default:
+						console.log('Unknown message type:', message.type);
+				}
+			};
+
+			// Gérer les événements reçus du serveur
+			function handleEvent(message) {
+				// Logique pour traiter les événements
+				console.log('Event received:', message.eventname);
+			}
+
+			// Répondre au PING avec un PONG
+			function handlePing() {
+				socket.send(JSON.stringify({type: 'PONG'}));
+			}
+
+			// Gérer la fermeture de la connexion
+			socket.onclose = function() {
+				console.log('WebSocket connection closed');
+				switchView("offline");
+			};
+
+			// Gérer les erreurs de connexion
+			socket.onerror = function(error) {
+				console.error('WebSocket error:', error);
+			};
+		});
 	</script>
 </body>
