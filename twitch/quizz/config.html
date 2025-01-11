@@ -46,7 +46,7 @@
 		.hide #game-mode,
 		.lobby #game-mode,
 		.question #game-mode,
-		.podium #game-mode,
+		.top #game-mode,
 		.offline #offline-error
 		{
 			display: flex;
@@ -148,7 +148,23 @@
 		.popup a:hover {
 			color: #9147ff;
 		}
-	</style>
+
+		#game-status-hide, #game-status-lobby, #game-status-top, #game-status-question,
+		.hide #btn-hide,
+		.lobby #btn-lobby,
+		.top #btn-top,
+		.question #btn-lobby,
+		#next-question, #start-question, #timer, #display-rep
+		{
+			display: none;
+		}
+
+		.hide #game-status-hide, .lobby #game-status-lobby, .top #game-status-top, .question #game-status-question,
+		.empty #start-question, .timer #timer, .timeout #display-rep, .rep #next-question {
+			display: block;
+		}
+
+		</style>
 	<title>QuizZ - Interface admin</title>
 	<script src="https://extension-files.twitch.tv/helper/v1/twitch-ext.min.js"></script>
 </head>
@@ -195,7 +211,7 @@
 		<button class="btn" id="btn-top">Afficher le classement</button>
 		<button class="btn" id="btn-question">Afficher la question</button>
 
-		<button class="btn" id="next-question">Question suivante</button>
+		<button class="btn" id="next-question" data-next="0">Question suivante</button>
 		<button class="btn" id="start-question">Lancer la question</button>
 		<div id="timer">
 			<p>Il reste 0 seconde</p>
@@ -217,10 +233,12 @@
 </div>
 	<script>
 		let questions = [];
+		let loaded = false;
 
 		const DomStatus = document.getElementById('status');
 		const DomQuestions = document.getElementById('questions');
 		const fileInput = document.getElementById('file-input');
+		const DomNext = document.getElementById('next-question');
 
 		DomQuestions.addEventListener('keydown', function(event) {
 			if (event.key === 'Tab') {
@@ -476,6 +494,8 @@
 		}
 
 		window.Twitch.ext.onAuthorized(function(auth) {
+			if(loaded) return; // Cette fonction semble être appelée plusieurs fois, pour éviter les connexions multiples depuis la même interface, on n'autorise que la 1ere
+			loaded = true;
 			// Ouvrir la connexion WebSocket
 			const socket = new WebSocket(`ws://localhost:8080?admin=${auth.token}`); // DEV
 //~ 			const socket = new WebSocket(`ws://localhost:8080?admin=${auth.token}`); // PROD
@@ -511,6 +531,9 @@
 						DomQuestions.value = convertToJSON([{question:"Quelle est la capitale de l'Italie ?", a: "Pizza", b: "Venise", c: "Rome", d: "Jules César", reponse: "c"}])
 					}
 				}
+
+				DomNext.dataset.next = (message.current >= message.questions.length) ? 0 : (message.current + 1);
+
 				switchView(message.state)
 				// TODO : gérer le cas timer
 				// TODO : MàJ les autres infos
@@ -559,6 +582,37 @@
 			}
 
 			document.getElementById('launch-btn').addEventListener('click', validateGame);
+			document.getElementById('btn-hide').addEventListener('click', {
+				switchView("loading");
+				socket.send(JSON.stringify({type: 'HIDE'}));
+			});
+			document.getElementById('btn-lobby').addEventListener('click', {
+				switchView("loading");
+				socket.send(JSON.stringify({type: 'LOBBY'}));
+			});
+			document.getElementById('btn-top').addEventListener('click', {
+				switchView("loading");
+				socket.send(JSON.stringify({type: 'TOP'}));
+			});
+			document.getElementById('btn-question').addEventListener('click', {
+				switchView("loading");
+				socket.send(JSON.stringify({type: 'QUESTION'}));
+			});
+			DomNext.addEventListener('click', {
+				if(DomNext.dataset.next > 0) {
+					switchView("loading");
+					socket.send(JSON.stringify({type: 'QUESTION', next: DomNext.dataset.next}));
+				}
+			});
+			document.getElementById('start-question').addEventListener('click', {
+				switchView("loading");
+				socket.send(JSON.stringify({type: 'START'}));
+			});
+			document.getElementById('display-rep').addEventListener('click', {
+				switchView("loading");
+				socket.send(JSON.stringify({type: 'REP'}));
+			});
+
 		});
 	</script>
 </body>
