@@ -504,14 +504,14 @@
 			// Gérer les événements reçus du serveur
 			function handleEvent(message) {
 				// Logique pour traiter les événements
-				if(state == "edit") {
+				if(message.state == "edit") {
 					if(message.questions.length) {
 						DomQuestions.value = convertToJSON(message.questions)
 					} else {
 						DomQuestions.value = convertToJSON([{question:"Quelle est la capitale de l'Italie ?", a: "Pizza", b: "Venise", c: "Rome", d: "Jules César", reponse: "c"}])
 					}
 				}
-				switchView(state)
+				switchView(message.state)
 				// TODO : gérer le cas timer
 				// TODO : MàJ les autres infos
 			}
