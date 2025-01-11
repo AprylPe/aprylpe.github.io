@@ -176,6 +176,9 @@
 				<button class="btn" type="button" id="export-btn">Exporter</button>
 			</div>
 		</div>
+		<div>
+			<p><b>À venir</b>: mélanger l'ordre des réponses, mélangers l'ordre des questions, choisir la durée pendant laquelle les joueurs peuvent répondre...</p>
+		</div>
 		<button class="btn" type="button" id="launch-btn">Lancer la partie</button>
 	</div>
 
@@ -416,31 +419,6 @@
 			URL.revokeObjectURL(url);
 		}
 
-		// Fonction pour valider et lancer la partie
-		function validateGame() {
-			if(analyzeQuestions()) {
-				// Questions détectées
-
-				// Logique pour valider les données et lancer la partie
-				let msg = validateQuestions(questions);
-
-				if(msg.length) {
-					// Problème dans les questions saisies
-					DomStatus.innerText = msg;
-				} else {
-					console.log('Partie validée et lancée');
-					// Passer en mode déroulement
-					// TODO : Packet nouvelle partie
-
-					document.getElementById('edit-mode').classList.remove('active');
-					document.getElementById('game-mode').classList.add('active');
-				}
-			} else {
-				// Données invalides, refuser de lancer la partie
-				DomStatus.innerHTML += "<br>Aucune question, la partie ne peut pas être lancée."
-			}
-		}
-
 		function validateQuestions(questions) {
 			for (let i = 0; i < questions.length; i++) {
 				const question = questions[i];
@@ -492,50 +470,50 @@
 		fileInput.addEventListener('change', importQuestionsFromFile);
 		DomQuestions.addEventListener('change', analyzeQuestions);
 		document.getElementById('export-btn').addEventListener('click', exportQuestions);
-		document.getElementById('launch-btn').addEventListener('click', validateGame);
-	</script>
-
-		<script>
-		console.log(Twitch)
 
 		function switchView(view) {
 			document.getElementById('mode').className = view;
 		}
 
 		window.Twitch.ext.onAuthorized(function(auth) {
-//~ 			switchView("hide");
-
-			// TODO : Remove debugs
-			console.log(Twitch);
-			console.log(auth);
-
-			// TODO : Ajouter un watchdog pour reconnecter si socket fermé
-
 			// Ouvrir la connexion WebSocket
 			const socket = new WebSocket(`ws://localhost:8080?admin=${auth.token}`); // DEV
 //~ 			const socket = new WebSocket(`ws://localhost:8080?admin=${auth.token}`); // PROD
 
 			// Gérer les messages reçus du serveur
 			socket.onmessage = function(event) {
-				const message = JSON.parse(event.data);
-				console.log('Message received from server:', message);
-				// Traiter le message en fonction de son type
-				switch (message.type) {
-					case 'EVENT':
-						handleEvent(message);
-						break;
-					case 'PING':
-						handlePing();
-						break;
-					default:
-						console.log('Unknown message type:', message.type);
+				try {
+					const message = JSON.parse(event.data);
+					console.log('Message received from server:', message);
+					// Traiter le message en fonction de son type
+					switch (message.type) {
+						case 'VIEW':
+							handleEvent(message);
+							break;
+						case 'PING':
+							handlePing();
+							break;
+						default:
+							console.log('Unknown message type:', message.type);
+					}
+				} catch(e) {
+					console.error(e)
 				}
 			};
 
 			// Gérer les événements reçus du serveur
 			function handleEvent(message) {
 				// Logique pour traiter les événements
-				console.log('Event received:', message.eventname);
+				if(state == "edit") {
+					if(message.questions.length) {
+						DomQuestions.value = convertToJSON(message.questions)
+					} else {
+						DomQuestions.value = convertToJSON([{question:"Quelle est la capitale de l'Italie ?", a: "Pizza", b: "Venise", c: "Rome", d: "Jules César", reponse: "c"}])
+					}
+				}
+				switchView(state)
+				// TODO : gérer le cas timer
+				// TODO : MàJ les autres infos
 			}
 
 			// Répondre au PING avec un PONG
@@ -553,6 +531,34 @@
 			socket.onerror = function(error) {
 				console.error('WebSocket error:', error);
 			};
+
+
+			// Fonction pour valider et lancer la partie
+			function validateGame() {
+				if(analyzeQuestions()) {
+					// Questions détectées
+
+					// Logique pour valider les données et lancer la partie
+					let msg = validateQuestions(questions);
+
+					if(msg.length) {
+						// Problème dans les questions saisies
+						DomStatus.innerText = msg;
+					} else {
+						console.log('Partie validée et lancée');
+						switchView("loading")
+
+						// TODO : Modifier pour envoyer un temps personnalisé
+						socket.send(JSON.stringify({type: "GAME", questions: questions, time: 15}))
+
+					}
+				} else {
+					// Données invalides, refuser de lancer la partie
+					DomStatus.innerHTML += "<br>Aucune question, la partie ne peut pas être lancée."
+				}
+			}
+
+			document.getElementById('launch-btn').addEventListener('click', validateGame);
 		});
 	</script>
 </body>
