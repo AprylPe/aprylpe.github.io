@@ -582,33 +582,33 @@
 			}
 
 			document.getElementById('launch-btn').addEventListener('click', validateGame);
-			document.getElementById('btn-hide').addEventListener('click', {
+			document.getElementById('btn-hide').addEventListener('click', () => {
 				switchView("loading");
 				socket.send(JSON.stringify({type: 'HIDE'}));
 			});
-			document.getElementById('btn-lobby').addEventListener('click', {
+			document.getElementById('btn-lobby').addEventListener('click', () => {
 				switchView("loading");
 				socket.send(JSON.stringify({type: 'LOBBY'}));
 			});
-			document.getElementById('btn-top').addEventListener('click', {
+			document.getElementById('btn-top').addEventListener('click', () => {
 				switchView("loading");
 				socket.send(JSON.stringify({type: 'TOP'}));
 			});
-			document.getElementById('btn-question').addEventListener('click', {
+			document.getElementById('btn-question').addEventListener('click', () => {
 				switchView("loading");
 				socket.send(JSON.stringify({type: 'QUESTION'}));
 			});
-			DomNext.addEventListener('click', {
+			DomNext.addEventListener('click', () => {
 				if(DomNext.dataset.next > 0) {
 					switchView("loading");
 					socket.send(JSON.stringify({type: 'QUESTION', next: DomNext.dataset.next}));
 				}
 			});
-			document.getElementById('start-question').addEventListener('click', {
+			document.getElementById('start-question').addEventListener('click', () => {
 				switchView("loading");
 				socket.send(JSON.stringify({type: 'START'}));
 			});
-			document.getElementById('display-rep').addEventListener('click', {
+			document.getElementById('display-rep').addEventListener('click', () => {
 				switchView("loading");
 				socket.send(JSON.stringify({type: 'REP'}));
 			});
