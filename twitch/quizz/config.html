@@ -663,7 +663,7 @@
 					if(message.state.match(/question/)) {
 						if(message.current > 0 && message.current <= message.questions.length) {
 							DomPreviewQuestionText.innerText = message.questions[message.current - 1].question
-							if(messgae.state.match(/empty/)) {
+							if(message.state.match(/empty/)) {
 								DomPreviewQuestionRepA.innerText = ""
 								DomPreviewQuestionRepB.innerText = ""
 								DomPreviewQuestionRepC.innerText = ""
@@ -674,7 +674,7 @@
 								DomPreviewQuestionRepC.innerText = message.questions[message.current -1].c
 								DomPreviewQuestionRepD.innerText = message.questions[message.current -1].d
 							}
-							if(messgae.state.match(/rep/)) {
+							if(message.state.match(/rep/)) {
 								DomPreviewQuestionRepA.className = ""
 								DomPreviewQuestionRepB.className = ""
 								DomPreviewQuestionRepC.className = ""
