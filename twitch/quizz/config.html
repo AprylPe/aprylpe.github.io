@@ -127,6 +127,10 @@
                 transform: translateY(-20px);
             }
         }
+		#loading p {
+			position: absolute;
+			margin: 48px 0 0 0;
+		}
 
 		.popup h1 {
 			background-color: #18181b;
@@ -140,12 +144,12 @@
 			font-size: 14px;
 			font-weight: 200;
 		}
-		.popup a {
+		.popup a, #loading a {
 			color: #bf94ff;
 			text-decoration: underline;
 			cursor: pointer;
 		}
-		.popup a:hover {
+		.popup a:hover, #loading a:hover {
 			color: #9147ff;
 		}
 
@@ -153,8 +157,9 @@
 		.hide #btn-hide,
 		.lobby #btn-lobby,
 		.top #btn-top,
-		.question #btn-lobby,
-		#next-question, #start-question, #timer, #display-rep
+		.question #btn-question,
+		#next-question, #start-question, #timer, #display-rep,
+		#preview-lobby, #preview-question, #preview-top, #preview-hide
 		{
 			display: none;
 		}
@@ -162,6 +167,72 @@
 		.hide #game-status-hide, .lobby #game-status-lobby, .top #game-status-top, .question #game-status-question,
 		.empty #start-question, .timer #timer, .timeout #display-rep, .rep #next-question {
 			display: block;
+		}
+
+		.lobby #preview-lobby, .question #preview-question, .top #preview-top, .hide #preview-hide {
+			display: flex;
+			flex-direction: column;
+		}
+
+		.col {
+			flex: 1;
+			display: flex;
+			flex-direction: column;
+		}
+
+		#player-view {
+			height: 120px;
+			margin: 0 12px 12px 12px;
+			padding: 12px;
+			background: #0004;
+			border-radius: 8px;
+			box-shadow: inset 0 0 20px #000;
+			overflow: hidden;
+			display: flex;
+			flex-direction: column;
+			justify-content: center;
+			align-items: stretch;
+		}
+		#preview-question {
+			flex: 1;
+		}
+		#preview-question-text {
+			margin: 0 0 8px 0;
+			padding: 0;
+			font-size: 1.4em;
+			flex: 1;
+		}
+		#preview-question>div {
+			flex: 2;
+			display: flex;
+			gap: 8px;
+		}
+		#preview-question p {
+			flex: 1;
+			background: #fff2;
+			box-shadow: inset 0 0 20px #fff8;
+			border-radius: 12px;
+			padding: 0 16px;
+			display: flex;
+			align-items: center;
+		}
+		#preview-question p.vrai {
+			box-shadow: inset 0 0 20px #2f6a;
+		}
+		#preview-question p.faux {
+			box-shadow: inset 0 0 20px #f20a;
+		}
+
+		#preview-top h1 {
+			margin: 0;
+			text-align: center;
+		}
+		#preview-top>div {
+			display: flex;
+		}
+		#preview-top ol {
+			margin: 0;
+			flex: 1;
 		}
 
 		</style>
@@ -201,34 +272,83 @@
 	<div id="game-mode">
 		<h2>Gestion de la partie en cours</h2>
 
-		<p id="game-status-hide">Le jeu est actuellement masqué</p>
-		<p id="game-status-lobby">Les joueurs peuvent voir: le lobby</p>
-		<p id="game-status-top">Les joueurs peuvent voir: le classement</p>
-		<p id="game-status-question">Les joueurs peuvent voir: la question</p>
+		<p id="game-status-hide">Le jeu est actuellement <b>masqué</b></p>
+		<p id="game-status-lobby">Les joueurs peuvent voir <b>le lobby</b></p>
+		<p id="game-status-top">Les joueurs peuvent voir <b>le classement</b></p>
+		<p id="game-status-question">Les joueurs peuvent voir <b>la question</b></p>
 
-		<button class="btn" id="btn-hide">Masquer le jeu</button>
-		<button class="btn" id="btn-lobby">Afficher le lobby</button>
-		<button class="btn" id="btn-top">Afficher le classement</button>
-		<button class="btn" id="btn-question">Afficher la question</button>
-
-		<button class="btn" id="next-question" data-next="0">Question suivante</button>
-		<button class="btn" id="start-question">Lancer la question</button>
-		<div id="timer">
-			<p>Il reste 0 seconde</p>
+		<div class="flex">
+			<div class="col">
+				<button class="btn" id="btn-hide">Masquer le jeu</button>
+				<button class="btn" id="btn-lobby">Afficher le lobby</button>
+				<button class="btn" id="btn-top">Afficher le classement</button>
+				<button class="btn" id="btn-question">Afficher la question</button>
+			</div>
+			<div class="col">
+				<button class="btn" id="next-question" data-next="0">Question suivante</button>
+				<button class="btn" id="start-question">Lancer la question</button>
+				<div id="timer">
+					<p>Il reste 0 seconde</p>
+				</div>
+				<button class="btn" id="display-rep">Afficher la réponse</button>
+				<p id="question-status">Nb de réponses: 0<br>Temps restant: 0s</p>
+			</div>
 		</div>
-		<button class="btn" id="display-rep">Afficher la réponse</button>
-		<p id="question-status">Nb de réponses: 0<br>Temps restant: 0s</p>
+
+		<h2 id="player-count">Vue joueurs - environ 0 joueurs connectés</h2>
+
+		<div id="player-view">
+			<div id="preview-lobby">
+				<h1 id="preview-lobby-title"></h1>
+				<p id="preview-lobby-frame"></p>
+			</div>
+			<div id="preview-question">
+				<h1 id="preview-question-text"></h1>
+				<div>
+					<p id="preview-rep-a"></p>
+					<p id="preview-rep-b"></p>
+				</div>
+				<div>
+					<p id="preview-rep-c"></p>
+					<p id="preview-rep-d"></p>
+				</div>
+			</div>
+			<div id="preview-top">
+				<h1>Classement</h1>
+				<div>
+					<ol>
+						<li></li>
+						<li></li>
+						<li></li>
+						<li></li>
+						<li></li>
+					</ol>
+					<ol start="6">
+						<li></li>
+						<li></li>
+						<li></li>
+						<li></li>
+						<li></li>
+					</ol>
+				</div>
+			</div>
+			<div id="preview-hide">
+				<p><i>Le jeu n'est pas visible.</i></p>
+			</div>
+		</div>
+
 
 	</div>
 	<div id="loading">
         <div class="loading-dot"></div>
         <div class="loading-dot"></div>
         <div class="loading-dot"></div>
+		<p>Si cet écran de chargement dure trop longtemps, tu peux <a onClick="/* Actualiser l'iframe */ switchView('loading'); setTimeout(() => {location.reload();}, 1000);">essayer de te reconnecter</a>.</p>
 	</div>
 	<div id="offline-error" class="popup">
         <h1>Connexion perdue avec l'extension</h1>
 		<p>L'extension <b>QuizBallZ</b> s'est déconnectée.</p>
-		<p>Si tu veux, tu peux <a onClick="/* Actualiser l'iframe */ switchView('loading'); setTimeout(() => {location.reload();}, 1000);">essayer de te reconnecter</a>.</p>
+		<p>Si tu veux, tu peux <a onClick="/* Actualiser l'iframe */ setTimeout(() => {location.reload();}, 1000);">essayer de te reconnecter</a>.</p>
 	</div>
 </div>
 	<script>
@@ -239,6 +359,15 @@
 		const DomQuestions = document.getElementById('questions');
 		const fileInput = document.getElementById('file-input');
 		const DomNext = document.getElementById('next-question');
+		const DomPreviewLobbyTitle = document.getElementById('preview-lobby-title');
+		const DomPreviewLobbyFrame = document.getElementById('preview-lobby-frame');
+		const DomPlayerCount = document.getElementById('player-count');
+		const DomPreviewQuestionText = document.getElementById('preview-question-text');
+		const DomPreviewQuestionRepA = document.getElementById('preview-rep-a');
+		const DomPreviewQuestionRepB = document.getElementById('preview-rep-b');
+		const DomPreviewQuestionRepC = document.getElementById('preview-rep-c');
+		const DomPreviewQuestionRepD = document.getElementById('preview-rep-d');
+
 
 		DomQuestions.addEventListener('keydown', function(event) {
 			if (event.key === 'Tab') {
@@ -530,13 +659,46 @@
 					} else {
 						DomQuestions.value = convertToJSON([{question:"Quelle est la capitale de l'Italie ?", a: "Pizza", b: "Venise", c: "Rome", d: "Jules César", reponse: "c"}])
 					}
+				} else {
+					if(message.state.match(/question/)) {
+						if(message.current > 0 && message.current <= message.questions.length) {
+							DomPreviewQuestionText.innerText = message.questions[current - 1].question
+							if(messgae.state.match(/empty/)) {
+								DomPreviewQuestionRepA.innerText = ""
+								DomPreviewQuestionRepB.innerText = ""
+								DomPreviewQuestionRepC.innerText = ""
+								DomPreviewQuestionRepD.innerText = ""
+							} else {
+								DomPreviewQuestionRepA.innerText = message.questions[message.current -1].a
+								DomPreviewQuestionRepB.innerText = message.questions[message.current -1].b
+								DomPreviewQuestionRepC.innerText = message.questions[message.current -1].c
+								DomPreviewQuestionRepD.innerText = message.questions[message.current -1].d
+							}
+							if(messgae.state.match(/rep/)) {
+								DomPreviewQuestionRepA.className = ""
+								DomPreviewQuestionRepB.className = ""
+								DomPreviewQuestionRepC.className = ""
+								DomPreviewQuestionRepD.className = ""
+							} else {
+								DomPreviewQuestionRepA.className = message.questions[message.current -1].reponse == "a" ? "vrai" : "faux"
+								DomPreviewQuestionRepB.className = message.questions[message.current -1].reponse == "b" ? "vrai" : "faux"
+								DomPreviewQuestionRepC.className = message.questions[message.current -1].reponse == "c" ? "vrai" : "faux"
+								DomPreviewQuestionRepD.className = message.questions[message.current -1].reponse == "d" ? "vrai" : "faux"
+							}
+						}
+					}
 				}
 
 				DomNext.dataset.next = (message.current >= message.questions.length) ? 0 : (message.current + 1);
 
+				// TODO : MàJ les autres infos
+				if(message.lobbyTitle) DomPreviewLobbyTitle.innerText = message.lobbyTitle;
+				if(message.lobbyText) DomPreviewLobbyFrame.innerText = message.lobbyText;
+				if(message.connectedPlayers) DomPlayerCount.innerText = message.connectedPlayers > 1 ? `Vue joueurs - ${message.connectedPlayers} joueurs connectés` : `Vue joueurs - ${message.connectedPlayers} joueur connecté`;
+
+
 				switchView(message.state)
 				// TODO : gérer le cas timer
-				// TODO : MàJ les autres infos
 			}
 
 			// Répondre au PING avec un PONG
