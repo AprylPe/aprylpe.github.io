@@ -662,7 +662,7 @@
 				} else {
 					if(message.state.match(/question/)) {
 						if(message.current > 0 && message.current <= message.questions.length) {
-							DomPreviewQuestionText.innerText = message.questions[current - 1].question
+							DomPreviewQuestionText.innerText = message.questions[message.current - 1].question
 							if(messgae.state.match(/empty/)) {
 								DomPreviewQuestionRepA.innerText = ""
 								DomPreviewQuestionRepB.innerText = ""
