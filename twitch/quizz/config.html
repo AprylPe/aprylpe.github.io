@@ -675,15 +675,15 @@
 								DomPreviewQuestionRepD.innerText = message.questions[message.current -1].d
 							}
 							if(message.state.match(/rep/)) {
-								DomPreviewQuestionRepA.className = ""
-								DomPreviewQuestionRepB.className = ""
-								DomPreviewQuestionRepC.className = ""
-								DomPreviewQuestionRepD.className = ""
-							} else {
 								DomPreviewQuestionRepA.className = message.questions[message.current -1].reponse == "a" ? "vrai" : "faux"
 								DomPreviewQuestionRepB.className = message.questions[message.current -1].reponse == "b" ? "vrai" : "faux"
 								DomPreviewQuestionRepC.className = message.questions[message.current -1].reponse == "c" ? "vrai" : "faux"
 								DomPreviewQuestionRepD.className = message.questions[message.current -1].reponse == "d" ? "vrai" : "faux"
+							} else {
+								DomPreviewQuestionRepA.className = ""
+								DomPreviewQuestionRepB.className = ""
+								DomPreviewQuestionRepC.className = ""
+								DomPreviewQuestionRepD.className = ""
 							}
 						}
 					}
