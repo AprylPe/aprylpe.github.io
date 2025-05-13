@@ -1307,7 +1307,7 @@ function sendJsonToDiscordWebhook() {
 	document.querySelectorAll('[data-role="hide"]').forEach(h => {h.style.display = "none"})
 
 	// Vérifier si l'URL est vide ou ne correspond pas au format attendu
-	if (!webhookUrl || !webhookUrl.match(/https:\/\/discord\.com\/api\/webhooks\/\d+\/[\w-]+/)) {
+	if (!webhookUrl || !webhookUrl.match(/https:\/\/discord\.com\/api\/webhooks\/\d+\/[\w-_]+/)) {
 		showMessage("error.webhook.badformat")
 		console.error('URL du webhook Discord invalide.');
 		return;
