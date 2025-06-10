@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>3D Object Comparator</title>
+  <style>
+    body {
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      background: #111;
+      color: white;
+      font-family: sans-serif;
+    }
+    #controls {
+      padding: 10px;
+      text-align: center;
+    }
+    #uploaders {
+      display: flex;
+      justify-content: space-around;
+      margin: 20px;
+    }
+    #uploaders input {
+        border: solid 2px #888;
+        margin: 16px;
+        padding: 32px;
+        border-radius: 16px;
+        display: block;
+        width: 100%;
+    }
+    #viewers {
+      display: none;
+      justify-content: space-around;
+      height: 75vh;
+    }
+    canvas {
+      width: 48vw;
+      height: 100%;
+      background: #291a30;
+    }
+  </style>
+</head>
+<body>
+  <div id="controls">
+    <label><input type="checkbox" id="wireframeToggle" /> Wireframe only</label>
+  </div>
+
+  <div id="uploaders">
+    <label for="file1">Load GLB for Viewer 1: <input type="file" id="file1" accept=".glb" /></label>
+    <label for="file2">Load GLB for Viewer 2: <input type="file" id="file2" accept=".glb" /></label>
+  </div>
+
+  <div id="viewers">
+    <canvas id="canvas1"></canvas>
+    <canvas id="canvas2"></canvas>
+  </div>
+
+  <div id="stats" style="padding: 20px; display: flex; justify-content: space-around; background: #222; font-size: 0.9rem;">
+    <div id="stats1">Viewer 1: waiting for file...</div>
+    <div id="stats2">Viewer 2: waiting for file...</div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/build/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/examples/js/controls/OrbitControls.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/examples/js/loaders/GLTFLoader.js"></script>
+  <script>
+    const file1 = document.getElementById('file1');
+    const file2 = document.getElementById('file2');
+    const canvas1 = document.getElementById('canvas1');
+    const canvas2 = document.getElementById('canvas2');
+    const viewersDiv = document.getElementById('viewers');
+    const toggle = document.getElementById('wireframeToggle');
+
+    let loaded1 = false, loaded2 = false;
+
+    const createScene = (canvas) => {
+      const scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x202030); // Fond customisé
+      const camera = new THREE.PerspectiveCamera(75, canvas.clientWidth / canvas.clientHeight, 0.1, 1000);
+      camera.position.set(0, 0, 5);
+
+      const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+      renderer.setSize(canvas.clientWidth, canvas.clientHeight, false);
+
+      const controls = new THREE.OrbitControls(camera, canvas);
+
+      const dirLight = new THREE.DirectionalLight(0xffffff, 1);
+      dirLight.position.set(3, 3, 3);
+      scene.add(dirLight);
+
+      const ambLight = new THREE.AmbientLight(0xffffff, 0.5);
+      scene.add(ambLight);
+
+      return { scene, camera, renderer, controls };
+    };
+
+    viewersDiv.style.display = 'flex';
+    requestAnimationFrame(() => {
+        const viewer1 = createScene(canvas1);
+        const viewer2 = createScene(canvas2);
+        viewersDiv.style.display = 'none';
+
+                const syncCameraAtoB = () => {
+          viewer2.camera.position.copy(viewer1.camera.position);
+          viewer2.camera.rotation.copy(viewer1.camera.rotation);
+          viewer2.controls.target.copy(viewer1.controls.target);
+        };
+
+        const syncCameraBtoA = () => {
+          viewer1.camera.position.copy(viewer2.camera.position);
+          viewer1.camera.rotation.copy(viewer2.camera.rotation);
+          viewer1.controls.target.copy(viewer2.controls.target);
+        };
+
+        viewer1.controls.addEventListener('change', syncCameraAtoB);
+        viewer2.controls.addEventListener('change', syncCameraBtoA);
+
+        toggle.addEventListener('change', () => {
+            const wireframe = toggle.checked;
+            [viewer1, viewer2].forEach(viewer => {
+                viewer.scene.traverse(obj => {
+                    if (obj.isMesh) obj.material.wireframe = wireframe;
+                });
+            });
+        });
+
+        const centerAndFit = (object, camera, controls) => {
+            const box = new THREE.Box3().setFromObject(object);
+            const center = box.getCenter(new THREE.Vector3());
+            const size = box.getSize(new THREE.Vector3()).length();
+
+            object.position.sub(center);
+            controls.target.set(0, 0, 0);
+            camera.position.set(0, 0, size * 1.2);
+            camera.lookAt(0, 0, 0);
+        };
+
+        const loadGLB = (file, viewer, onLoadCallback, statsElement) => {
+            const loader = new THREE.GLTFLoader();
+            const reader = new FileReader();
+
+            reader.onload = function (e) {
+                const arrayBuffer = e.target.result;
+                const totalSizeKB = (file.size / 1024);
+                const glbDataView = new DataView(arrayBuffer);
+
+                const jsonLength = glbDataView.getUint32(12, true);
+                const jsonStart = 20;
+                const jsonText = new TextDecoder().decode(new Uint8Array(arrayBuffer, jsonStart, jsonLength));
+                const gltfJson = JSON.parse(jsonText);
+
+                // Texture sizes from bufferViews
+                let textureBytes = 0;
+                if (gltfJson.images && gltfJson.bufferViews) {
+                gltfJson.images.forEach(img => {
+                    if (img.bufferView != null) {
+                    const bv = gltfJson.bufferViews[img.bufferView];
+                    textureBytes += bv.byteLength || 0;
+                    }
+                });
+                }
+                const textureSizeKB = textureBytes / 1024;
+
+                loader.parse(e.target.result, '', gltf => {
+                    viewer.scene.add(gltf.scene);
+                    centerAndFit(gltf.scene, viewer.camera, viewer.controls);
+
+                    let vertexCount = 0, triangleCount = 0;
+                    gltf.scene.traverse(obj => {
+                        if (obj.isMesh) {
+                            const geom = obj.geometry;
+                            vertexCount += geom.attributes.position.count;
+                            triangleCount += geom.index ? geom.index.count / 3 : geom.attributes.position.count / 3;
+                        }
+                    });
+
+                    statsElement.innerText = `Size: ${Math.ceil(totalSizeKB).toLocaleString()} KB
+> of which textures: ${Math.ceil(textureSizeKB).toLocaleString()} KB
+Vertices: ${vertexCount.toLocaleString()}
+Triangles: ${Math.round(triangleCount).toLocaleString()}`;
+
+                    onLoadCallback();
+                });
+            };
+            reader.readAsArrayBuffer(file);
+        };
+
+        const checkReady = () => {
+            if (loaded1 && loaded2) {
+                document.getElementById('uploaders').style.display = 'none';
+                viewersDiv.style.display = 'flex';
+                animate();
+            }
+        };
+
+        file1.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) loadGLB(file, viewer1, () => { loaded1 = true; checkReady(); }, document.getElementById('stats1'));
+        });
+
+        file2.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) loadGLB(file, viewer2, () => { loaded2 = true; checkReady(); }, document.getElementById('stats2'));
+        });
+
+        const animate = () => {
+            requestAnimationFrame(animate);
+            viewer1.renderer.render(viewer1.scene, viewer1.camera);
+            viewer2.renderer.render(viewer2.scene, viewer2.camera);
+        };
+
+        window.addEventListener('resize', () => {
+            const resizeViewer = (viewer, canvas) => {
+                const width = canvas.clientWidth;
+                const height = canvas.clientHeight;
+                viewer.camera.aspect = width / height;
+                viewer.camera.updateProjectionMatrix();
+                viewer.renderer.setSize(width, height, false);
+            };
+            resizeViewer(viewer1, canvas1);
+            resizeViewer(viewer2, canvas2);
+        });
+
+    })
+  </script>
+</body>
+</html>
